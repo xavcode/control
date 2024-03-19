@@ -1,20 +1,23 @@
 import tkinter as tk
 
-import guias, remesas, anexos, destinos
+import guias, remesas, anexos, destinos, config
 
 # Crear la ventana principal
 window = tk.Tk()
 window.title("Control Guias y Facturacion Intermodal")
 window.geometry("1360x768")
-window.configure()
+window.configure( )
 
-main_frame = tk.Frame(window)
-main_frame.grid(row=0, column=50, sticky="nsew", pady=10, padx=10)
+main_frame = tk.Frame(window, bd=2, relief="groove",width=1200, height=600)
+main_frame.grid(row=0, column=50, sticky="wens", pady=10, padx=10)
+main_frame.grid_rowconfigure(0, weight=1)
+main_frame.grid_columnconfigure(0, weight=1)
+main_frame.grid_propagate(False)
 
 # Frame para los botones
 
 frame_botones = tk.Frame(window)
-frame_botones.grid(row=0,column=0, sticky="ns", padx=20, pady=20,)
+frame_botones.grid(row=0,column=0, sticky="we", padx=10, pady=20,)
 frame_botones.config()
 
 # Botón para mostrar el boton home
@@ -40,6 +43,11 @@ btn_anexos.grid(row=4, column=0, pady=10)
 # Botón para mostrar el formulario de facturación
 btn_facturacion = tk.Button(frame_botones, text="Facturación", width=12, state="disabled") 
 btn_facturacion.grid(row=5, column=0, pady=10)
+
+btn_config = tk.Button(frame_botones, text='Configuración', width=12, command=lambda: config.show_config(main_frame))
+btn_config.grid(row=6, column=0, pady=10)
+
+
 
 
 if __name__ == "__main__":

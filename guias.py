@@ -58,38 +58,37 @@ def show_guias(frame):
     for widget in frame.winfo_children():
         widget.grid_forget()
 
-    frame_guias = tk.Frame(frame, bd=2, relief="groove")
-    frame_guias.grid(row=0, column=4, sticky="n", padx=10, pady=10)
+    frame_guias = tk.Frame(frame, bd=2, relief="groove", width=1000, height=600)
+    frame_guias.grid(row=0, column=0, padx=0, pady=10, )
+    frame_guias.grid_propagate(False)
+    
+    frame_guias.grid_columnconfigure(0, weight=1)
+    frame_guias.grid_columnconfigure(1, weight=1)
 
     frame_buscar_guias = tk.Frame(frame_guias, bd=2, relief="groove")
-    frame_buscar_guias.grid( row=0, column=0, padx=10, pady=10)
-    tk.Label(frame_buscar_guias, text="Buscar Guías", font=("Arial", 18)).grid(
-        row=0, column=0, columnspan=2, pady=10
-    )
-    tk.Label(frame_buscar_guias, text="Ingrese Guía:").grid(row=1, column=0, sticky="w")
+    frame_buscar_guias.grid( row=0, column=0, sticky='we', padx=10, pady=10)
+    
+    tk.Label(frame_buscar_guias, text="Buscar Guías", font=("Arial", 18)).grid(row=0, column=0, columnspan=2, pady=10 )
+    tk.Label(frame_buscar_guias, text="Ingrese Guía:").grid(row=1, column=0, sticky="w")    
     entry_search_guia = tk.Entry(frame_buscar_guias)
     entry_search_guia.grid(row=1, column=1, sticky="w", padx=10, pady=10)
     entry_search_guia.bind("<Return>", lambda event: search_button.invoke())
-    search_button = tk.Button(
-        frame_buscar_guias,
-        text="Buscar",
-        command=lambda: search_guias(frame_guias, entry_search_guia.get()),
-    )
+    search_button = tk.Button(frame_buscar_guias,text="Buscar",command=lambda: search_guias(frame_guias, entry_search_guia.get()) )
     search_button.grid(row=2, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
 
+
     frame_agregar_guias = tk.Frame(frame_guias, bd=2, relief="groove")
-    frame_agregar_guias.grid(row=0, column=1, padx=10, pady=10)
-    tk.Label(frame_agregar_guias, text="Agregar Guías", font=("Arial", 18)).grid(
-        row=0, column=0, columnspan=2, pady=10
-    )
+    frame_agregar_guias.grid(row=0, column=1, sticky='we',  padx=10, pady=10)
+    
+    tk.Label(frame_agregar_guias, text="Agregar Guías", font=("Arial", 18)).grid(row=0, column=0, columnspan=2, pady=10 )
     tk.Label(frame_agregar_guias, text="Ingrese Guía:").grid(row=1, column=0, sticky="w")
     entry_add_guia = tk.Entry(frame_agregar_guias)
-    entry_add_guia.grid(row=1, column=1, sticky="w", padx=10, pady=10)
+    entry_add_guia.grid(row=1, column=1, sticky="w", padx=10, pady=10)    
     add_button = tk.Button(frame_agregar_guias, text="Agregar")
     add_button.grid(row=2, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
 
-    frame_import_all = tk.Frame(frame_guias, bd=2, relief="groove")
-    frame_import_all.grid(row=3, column=0, columnspan=4, sticky='we')
+    frame_import_all = tk.Frame(frame_guias, bd=2, relief="groove", background="red")
+    frame_import_all.grid(row=0, column=2, columnspan=2, sticky='s', padx=10, pady=10)
     import_button = tk.Button(frame_guias, text="Importar", command=read_xls_file)
     import_button.grid(row=1, column=1, sticky="e", padx=10, pady=5)
 

@@ -13,8 +13,11 @@ def show_anexos(frame):
     for widget in frame.winfo_children():
         widget.grid_forget()
 
-    frame_anexos = tk.Frame(frame, bd=2, relief="groove", width=600, height=400)
-    frame_anexos.grid(row=0, column=1, pady=10)
+    frame_anexos = tk.Frame(frame, bd=2, relief="groove", width=1000, height=600)
+    frame_anexos.grid(row=0, column=0, sticky='nswe', pady=10)
+    frame_anexos.grid_propagate(False)
+    frame_anexos.grid_rowconfigure(0, weight=1)
+    frame_anexos.grid_columnconfigure(0, weight=1)
     
     def extract_table():
       full_table = []
@@ -73,30 +76,21 @@ def show_anexos(frame):
         export.to_excel(file_path, index=False)
         os.startfile(file_path)
       print(export)
-      
-    frame_add_anexos = tk.Frame(frame_anexos)
-    frame_add_anexos.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky='nswe')
-    
-    # Button to add anexos
-    btn_add_anexos = tk.Button(frame_add_anexos, text="Agregar Anexos", command=lambda: extract_table())
-    btn_add_anexos.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
-    
-    btn_export_anexos = tk.Button(frame_add_anexos, text="Exportar excel", command=lambda: export_pdf())
-    btn_export_anexos.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
     
      # Create a Treeview widget
-    tree = ttk.Treeview(frame_anexos, selectmode="browse")
+    tree = ttk.Treeview(frame_anexos, height=20, show='headings', selectmode="browse")
+    tree.grid(row=1, column=0, columnspan=2, sticky='nsew', padx=10, pady=10)
 
     # Define columns
     tree["columns"] = ("GUIA","PRODUCTO","DESTINO","UDS","PESO","FTE FIJO","FTE VARIABLE","FTE TOTAL","TIPO")
-
+    
     # Format columns
     tree.column("#0", width=0, stretch=tk.NO)
     tree.column("GUIA", width=100, anchor='center')
     tree.column("PRODUCTO", width=100, anchor='center')
     tree.column("DESTINO", width=100, anchor='center')
-    tree.column("UDS", width=100, anchor='center')
-    tree.column("PESO", width=100, anchor='center')
+    tree.column("UDS", width=50, anchor='center')
+    tree.column("PESO", width=50, anchor='center')
     tree.column("FTE FIJO", width=100, anchor='center')
     tree.column("FTE VARIABLE", width=100, anchor='center')
     tree.column("FTE TOTAL", width=100, anchor='center')
@@ -108,29 +102,29 @@ def show_anexos(frame):
     tree.heading("PRODUCTO", text="PRODUCTO")
     tree.heading("DESTINO", text="DESTINO")
     tree.heading("UDS", text="UDS")
-    tree.heading("PESO", text="PESO")
+    tree.heading("PESO", text="KG")
     tree.heading("FTE FIJO", text="FTE FIJO")
     tree.heading("FTE VARIABLE", text="FTE VARIABLE")
     tree.heading("FTE TOTAL", text="FTE TOTAL")
     tree.heading("TIPO", text="TIPO")
 
-  # Add the treeview to the frame
-    tree.grid(row=1, column=0, columnspan=2, padx=10, pady=10)
+ 
 
     # Add a scrollbar to the treeview
     scrollbar = ttk.Scrollbar(frame_anexos, orient="vertical", command=tree.yview)
     scrollbar.grid(row=1, column=2, sticky="ns")
     tree.configure(yscrollcommand=scrollbar.set)
-  
-    return frame_anexos    
-      # sum_fte = sum_fte.round(2)
-      # df.to_csv("output.csv", index=False)
-
-      # connection = sqlite3.connect("d:/intermodal/contro/intermodal_control.db")
-      # df.to_sql("Anexos", connection, if_exists="append", index=False) 
-      # D:\intermodal\control
-      # # print(sum_fte)
-      # connection.close()
-
+    
+    frame_add_anexos = tk.Frame(frame_anexos)
+    frame_add_anexos.grid(row=2, column=0, columnspan=2, padx=10, pady=10, sticky='se')
+    
+    # Button to add anexos
+    btn_add_anexos = tk.Button(frame_add_anexos, text="Agregar Anexos", command=lambda: extract_table())
+    btn_add_anexos.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
+    
+    btn_export_anexos = tk.Button(frame_add_anexos, text="Exportar excel", command=lambda: export_pdf())
+    btn_export_anexos.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
+    
+    return frame_anexos 
 
 
