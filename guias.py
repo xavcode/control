@@ -58,43 +58,44 @@ def show_guias(frame):
     for widget in frame.winfo_children():
         widget.grid_forget()
 
-    frame_guias = tk.Frame(frame, bd=2, relief="groove", width=1000, height=600)
+    frame_guias = ttk.LabelFrame(frame, relief="groove", width=1200, height=600, text="Guias")
     frame_guias.grid(row=0, column=0, padx=0, pady=10, )
     frame_guias.grid_propagate(False)
     
     frame_guias.grid_columnconfigure(0, weight=1)
     frame_guias.grid_columnconfigure(1, weight=1)
+    
 
-    frame_buscar_guias = tk.Frame(frame_guias, bd=2, relief="groove")
+    frame_buscar_guias = ttk.LabelFrame(frame_guias, )
     frame_buscar_guias.grid( row=0, column=0, sticky='we', padx=10, pady=10)
     
-    tk.Label(frame_buscar_guias, text="Buscar Guías", font=("Arial", 18)).grid(row=0, column=0, columnspan=2, pady=10 )
-    tk.Label(frame_buscar_guias, text="Ingrese Guía:").grid(row=1, column=0, sticky="w")    
-    entry_search_guia = tk.Entry(frame_buscar_guias)
+    ttk.Label(frame_buscar_guias, text="Buscar Guías", font=("Arial", 18)).grid(row=0, column=0, columnspan=2, pady=10 )
+    ttk.Label(frame_buscar_guias, text="Ingrese Guía:").grid(row=1, column=0, sticky="w")    
+    entry_search_guia = ttk.Entry(frame_buscar_guias)
     entry_search_guia.grid(row=1, column=1, sticky="w", padx=10, pady=10)
-    entry_search_guia.bind("<Return>", lambda event: search_button.invoke())
-    search_button = tk.Button(frame_buscar_guias,text="Buscar",command=lambda: search_guias(frame_guias, entry_search_guia.get()) )
-    search_button.grid(row=2, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
+    # entry_search_guia.bind("<Return>", lambda event: search_button.invoke())
+    # search_button = tk.Button(frame_buscar_guias,text="Buscar",command=lambda: search_guias(frame_guias, entry_search_guia.get()) )
+    # search_button.grid(row=2, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
 
 
-    frame_agregar_guias = tk.Frame(frame_guias, bd=2, relief="groove")
+    frame_agregar_guias = ttk.LabelFrame(frame_guias, )
     frame_agregar_guias.grid(row=0, column=1, sticky='we',  padx=10, pady=10)
     
-    tk.Label(frame_agregar_guias, text="Agregar Guías", font=("Arial", 18)).grid(row=0, column=0, columnspan=2, pady=10 )
-    tk.Label(frame_agregar_guias, text="Ingrese Guía:").grid(row=1, column=0, sticky="w")
-    entry_add_guia = tk.Entry(frame_agregar_guias)
+    ttk.Label(frame_agregar_guias, text="Agregar Guías", font=("Arial", 18)).grid(row=0, column=0, columnspan=2, pady=10 )
+    ttk.Label(frame_agregar_guias, text="Ingrese Guía:").grid(row=1, column=0, sticky="w")
+    entry_add_guia = ttk.Entry(frame_agregar_guias)
     entry_add_guia.grid(row=1, column=1, sticky="w", padx=10, pady=10)    
-    add_button = tk.Button(frame_agregar_guias, text="Agregar")
+    add_button = ttk.Button(frame_agregar_guias, text="Agregar")
     add_button.grid(row=2, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
 
-    frame_import_all = tk.Frame(frame_guias, bd=2, relief="groove", background="red")
+    frame_import_all = ttk.LabelFrame(frame_guias, text="Importar Guias")
     frame_import_all.grid(row=0, column=2, columnspan=2, sticky='s', padx=10, pady=10)
-    import_button = tk.Button(frame_guias, text="Importar", command=read_xls_file)
+    import_button = ttk.Button(frame_guias, text="Importar", command=read_xls_file)
     import_button.grid(row=1, column=1, sticky="e", padx=10, pady=5)
 
-    return frame_guias
+    return frame
 
-def search_guias(frame, number):
+# def search_guias(frame, number):
     
     connection = sqlite3.connect("D:/intermodal/control/control_intermodal.db")
     # Execute a SQL query to search for the guia number
@@ -104,7 +105,7 @@ def search_guias(frame, number):
     # Process the query result
     for row in result:
         # Create a new frame for each row
-        frame_row = tk.Frame(frame, bd=2, relief="groove")
+        frame_row = ttk.LabelFrame(frame, )
         frame_row.grid(row=4, column=0, sticky="we", columnspan=2, padx=10, pady=10)
 
         # Display the data in labels

@@ -2,10 +2,9 @@ import os
 import pandas as pd
 import pdfplumber
 import tkinter as tk
-from tkinter import ttk
-from tkinter import filedialog
+from tkinter import ttk, filedialog,messagebox
 import sqlite3
-from tkinter import messagebox
+
 
 
 def show_anexos(frame):
@@ -13,7 +12,7 @@ def show_anexos(frame):
     for widget in frame.winfo_children():
         widget.grid_forget()
 
-    frame_anexos = tk.Frame(frame, bd=2, relief="groove", width=1000, height=600)
+    frame_anexos = ttk.LabelFrame(frame,  width=1000, height=600, text="Anexos")
     frame_anexos.grid(row=0, column=0, sticky='nswe', pady=10)
     frame_anexos.grid_propagate(False)
     frame_anexos.grid_rowconfigure(0, weight=1)
@@ -115,7 +114,7 @@ def show_anexos(frame):
     scrollbar.grid(row=1, column=2, sticky="ns")
     tree.configure(yscrollcommand=scrollbar.set)
     
-    frame_add_anexos = tk.Frame(frame_anexos)
+    frame_add_anexos = ttk.LabelFrame(frame_anexos)
     frame_add_anexos.grid(row=2, column=0, columnspan=2, padx=10, pady=10, sticky='se')
     
     # Button to add anexos

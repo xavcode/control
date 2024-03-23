@@ -1,10 +1,12 @@
 import os
 import tkinter as tk
-from tkinter import messagebox, filedialog
+from tkinter import messagebox, filedialog,ttk
 
 
 global db_path 
-db_path = 'D:/intermodal/control/control_intermodal.db'
+# db_path = 'D:/intermodal/control/control_intermodal.db'
+db_path = 'D:/intermodal/control_intermodal - copia.db'
+
 
 def select_db():
     file_path = filedialog.askopenfilename(filetypes=[("Archivo de base de datos", "*.db")])
@@ -22,7 +24,7 @@ def show_config(frame):
     for widget in frame.winfo_children():
         widget.grid_forget()
    
-    frame_config = tk.Frame(frame, bd=2, relief="groove", width=1000, height=400)
+    frame_config = ttk.LabelFrame(frame, width=1200, height=600, text="Configuración")
     frame_config.grid(row=0, column=0, pady=10, padx=10)
     frame_config.grid_propagate(False)
 
@@ -40,6 +42,34 @@ def show_config(frame):
     
     btn_save = tk.Button(frame_config, text="Guardar", command=lambda: save_db_path(entry_db.get()))
     btn_save.grid(row=2, column=1, columnspan=1, sticky="nsew", padx=5, pady=5)
+    
+    #****-------------------------------------------------****#
+    separator = ttk.Separator(frame_config, orient='horizontal')
+    separator.grid(row=3, column=0, columnspan=2, sticky="ew", pady=10)    
+        
+    #Consecutives
+    label_consecutives = tk.Label(frame_config, text="Consecutivos", font=("Arial", 18))
+    label_consecutives.grid(row=4, column=0, pady=10)
+    
+    label_letter = tk.Label(frame_config, text="Letras", font=("Arial", 12))
+    label_letter.grid(row=5, column=0, sticky="w", padx=5, pady=5)
+    letters_consecutives = tk.Entry(frame_config)
+    letters_consecutives.grid(row=6, column=0, sticky="w", padx=5, pady=5)
+    letters_consecutives.insert('end', 'RTP')
+    
+    label_numbers = tk.Label(frame_config, text="Numeros", font=("Arial", 12))
+    label_numbers.grid(row=5, column=1, sticky="w", padx=5, pady=5)
+    numbers_consecutives = tk.Entry(frame_config)
+    numbers_consecutives.grid(row=6, column=1, sticky="w", padx=5, pady=5)
+    numbers_consecutives.insert('end', '0001')
+    
+    separator2 = ttk.Separator(frame_config, orient='horizontal')
+    separator2.grid(row=7, column=0, columnspan=2, sticky="ew", pady=15)
+    
+    btn_save_changes = tk.Button(frame_config, text="Guardar Cambios")
+    btn_save_changes.grid(row=8, column=0, columnspan=2, pady=10)
+    
+    
     
 
     return frame_config

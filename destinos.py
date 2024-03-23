@@ -4,8 +4,6 @@ from tkinter import ttk, filedialog, messagebox
 import sqlite3
 import config
 
-print(config.db_path)
-
 
 def show_destinos(frame):
     for widget in frame.winfo_children():
@@ -22,7 +20,7 @@ def show_destinos(frame):
             table.insert("", "end", text="", values=tuple(row))  # type: ignore
         conn.close()
     
-    frame_destinos = tk.Frame(frame, bd=2, relief="groove", width=1000, height=600) 
+    frame_destinos = ttk.LabelFrame(frame, text="Destinos") 
     frame_destinos.grid(row=0, column=0, pady=10, padx=30)
     frame_destinos.grid_propagate(False)
     frame_destinos.grid_rowconfigure(0, weight=1)
@@ -32,7 +30,7 @@ def show_destinos(frame):
     # label = tk.Label(frame_destinos, text="Destinos")
     # label.grid(row=0, column=0, padx=10, pady=10, sticky="n")
 
-    frame_table_destinos = tk.Frame(frame_destinos, bd=2, relief="groove", )
+    frame_table_destinos = ttk.LabelFrame(frame_destinos)
     frame_table_destinos.grid(row=0, column=0, pady=10, padx=20)
     
     
@@ -58,7 +56,7 @@ def show_destinos(frame):
 
     print_destinos()
     
-    frame_form_add_destinos = tk.Frame(frame_destinos, bd=2, relief="groove", )
+    frame_form_add_destinos = ttk.LabelFrame(frame_destinos, text="Agregar Destinos")
     frame_form_add_destinos.grid(row=0, column=1, pady=10, padx=20)
     
     # Create labels and entry widgets for adding destinations and their values
