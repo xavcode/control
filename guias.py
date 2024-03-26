@@ -97,7 +97,7 @@ def show_guias(frame):
         # Create a connection to the database
         connection = sqlite3.connect(config.db_path)
         # Execute a SQL query to fetch all the guias
-        query = "SELECT * FROM guias LIMIT 100"
+        query = "SELECT estado, numero_guia, fecha_de_asignacion, remitente, destino, destinatario, direccion_de_entrega, unidades, peso_Kg, volumen_m3, ultima_causal, fecha_ultima_causal, telefono FROM guias"
         result = connection.execute(query)
         data = result.fetchall()
         for row in data:
@@ -106,8 +106,12 @@ def show_guias(frame):
         
         connection.close()
     
-    frame_guias = ttk.LabelFrame(frame, relief="groove", text="Guias")
+    frame_guias = ttk.LabelFrame(frame, relief="groove", text="Guias", width=1200, height=700,)
     frame_guias.grid(row=0, column=0, padx=0, pady=10, sticky="n" )
+    frame_guias.grid_propagate(False)
+    frame_guias.grid_columnconfigure(0, weight=1)
+    frame_guias.grid_columnconfigure(1, weight=1)
+    
     
 
     frame_buscar_guias = ttk.LabelFrame(frame_guias, )
@@ -136,25 +140,29 @@ def show_guias(frame):
     frame_import_all = ttk.LabelFrame(frame_guias,  text="Importar Guias", border=2, relief="groove", ) 
     frame_import_all.grid(row=3, column=2, columnspan=2, sticky='s', padx=20, pady=20) 
     import_button = ttk.Button(frame_guias, text="Importar", command=read_xls_file,)
-    import_button.grid(row=2, column=1, sticky="e", padx=10, pady=5)
-    
+    import_button.grid(row=3, column=1, sticky="e", padx=10, pady=5)
+
     ##************************************************************
     ##***********************LIST GUIAS***************************
     ##************************************************************
+
+
+    list_camp = ("Estado", "Numero_guia", "F. Asignacion", "Remitente", "Destino", "Destinatario", "Direccion_de_entrega", "Unidades", "Peso_Kg", "Volumen_m3", "Ultima_causal", "Fecha_ultima_causal", "Telefono")
+
+    
+    table = ttk.Treeview(frame_guias, columns=(list_camp), show="headings", height=15)
+    table.grid(row=1, column=0, columnspan=3, sticky="w", padx=10, pady=10)
+    table.configure(height=15)
+    # table.place(relx=0.1, rely=0.1, relwidth=.9, relheight=.9)
     
 
-    list_camp = ("Estado", "Numero_guia", "Fecha_de_asignacion", "Remitente", "Destino", "Destinatario", "Direccion_de_entrega", "Unidades", "Peso_Kg", "Volumen_m3", "Ultima_causal", "Fecha_ultima_causal", "Telefono")
-   
-    table = ttk.Treeview(frame_guias, columns=(list_camp), show="headings", height=15,)
-    table.grid(row=1, column=0, columnspan=2, sticky="nswe", padx=10, pady=10)
-    table.column("#0", width=0, stretch=False, anchor="center")
-    table.column("Estado", width=50, stretch=False, anchor="center")
-    table.column("Numero_guia", width=100, stretch=False, anchor="center")
-    table.column("Fecha_de_asignacion", width=100, stretch=False, anchor="center")
-    table.column("Remitente", width=100, stretch=False, anchor="center")
+    table.column("Estado", width=100, stretch=False, anchor="center")
+    table.column("Numero_guia", width=80, stretch=False, anchor="center")
+    table.column("F. Asignacion", width=100, stretch=False, anchor="center")
+    table.column("Remitente", width=150, stretch=False, anchor="center")
     table.column("Destino", width=100, stretch=False, anchor="center")
-    table.column("Destinatario", width=100, stretch=False, anchor="center")
-    table.column("Direccion_de_entrega", width=100, stretch=False, anchor="center")
+    table.column("Destinatario", width=120, stretch=False, anchor="center")
+    table.column("Direccion_de_entrega", width=300, stretch=False, anchor="center")
     table.column("Unidades", width=50, stretch=False, anchor="center")
     table.column("Peso_Kg", width=50, stretch=False, anchor="center")
     table.column("Volumen_m3", width=50, stretch=False, anchor="center")
@@ -165,9 +173,13 @@ def show_guias(frame):
     
     for camp in list_camp:
         table.heading(camp, text=camp)
-    scrollbar = ttk.Scrollbar(frame_guias, orient="vertical", command=table.yview)
-    scrollbar.grid(row=1, column=2, sticky="")
-    scrollbar = ttk.Scrollbar(frame_guias, orient="horizontal", command=table.xview)
-    scrollbar.grid(row=3, column=0, columnspan=2, sticky="we")
+    vscrollbar = ttk.Scrollbar(frame_guias, orient="vertical", command=table.yview)
+    vscrollbar.grid(row=1, column=3, sticky="ns", pady=15)
+    table.configure(yscrollcommand=vscrollbar.set)
+    
+    hscrollbar = ttk.Scrollbar(frame_guias, orient="horizontal", command=table.xview)
+    hscrollbar.grid(row=2, column=0,  columnspan=2, sticky="we")
+    table.configure(xscrollcommand=hscrollbar.set)
+
     
     list_all_guias()

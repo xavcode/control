@@ -205,6 +205,7 @@ def show_remesas(frame):
     tk.Label(frame_form_remesa, text="Manifiesto:").grid( row=1, column=2, sticky="w", padx=10  )
     entry_manifiesto = ttk.Entry(frame_form_remesa)
     entry_manifiesto.grid(row=1, column=3, padx=5, pady=5)
+    entry_manifiesto.insert(0, "MCP-")
 
     ttk.Label(frame_form_remesa, text="Conductor:").grid( row=1, column=4, sticky="w", padx=10)
     entry_conductor = ttk.Entry(frame_form_remesa)
@@ -428,21 +429,23 @@ def show_remesas(frame):
     
     def search_guias_remesa(id_remesa):
         connection = sqlite3.connect(config.db_path)
-        query = f"SELECT numero_guia, estado, destino, destinatario, unidades, peso_Kg, volumen_m3, fecha_de_asignacion, en_anexo, en_factura FROM guias AS g JOIN remesas_guias AS rg ON  g.numero_guia = rg.guia_id WHERE remesa_id = '{id_remesa}';"
+        query = f"SELECT guias.numero_guia, guias.estado, guias.destino, guias.destinatario, guias.unidades, guias.peso_Kg, guias.volumen_m3, destinos.valor_destino_1, guias.fecha_de_asignacion, guias.en_anexo, guias.en_factura FROM guias JOIN remesas_guias ON guias.numero_guia = remesas_guias.guia_id JOIN remesas ON remesas.id_remesa = remesas_guias.remesa_id JOIN destinos ON destinos.destino = guias.destino WHERE remesas.id_remesa = '{id_remesa}';"
         result = connection.execute(query)
         data = result.fetchall()
         table_list_guias.delete(*table_list_guias.get_children())      
+       
         for row in data:            
-            
+            print(row)
             # Configurar encabezados de columna
-            table_list_guias.column("#0", width=0, stretch=False, anchor="center")
+            # table_list_guias.column("#0", width=0, stretch=False, anchor="center")
             table_list_guias.column("numero_guia", width=150, stretch=False, anchor="center")
             table_list_guias.column("estado", width=180, stretch=False, anchor="center")
             table_list_guias.column("destino", width=200, stretch=False, anchor="center")
-            table_list_guias.column("destinatario", width=300, stretch=False, anchor="center")
+            table_list_guias.column("destinatario", width=200, stretch=False, anchor="center")
             table_list_guias.column("unidades", width=50, stretch=False, anchor="center")
             table_list_guias.column("peso_Kg", width=50, stretch=False, anchor="center")
             table_list_guias.column("volumen_m3", width=50, stretch=False, anchor="center")
+            table_list_guias.column("valor", width=100, stretch=False, anchor="center")
             table_list_guias.column("fecha_de_asignacion", width=100, stretch=False, anchor="center")
             table_list_guias.column("en_anexo", width=75, stretch=False, anchor="center")
             table_list_guias.column("en_factura", width=75, stretch=False, anchor="center")
@@ -455,7 +458,8 @@ def show_remesas(frame):
             table_list_guias.heading("unidades", text="Uds")                        
             table_list_guias.heading("peso_Kg", text="Kg")
             table_list_guias.heading("volumen_m3", text="Vol(M3)")
-            table_list_guias.heading("fecha_de_asignacion", text="Fecha")
+            table_list_guias.heading("valor", text="Valor")
+            table_list_guias.heading("fecha_de_asignacion", text="F. Asignacion")
             table_list_guias.heading("en_anexo", text="Anexo")
             table_list_guias.heading("en_factura", text="Factura")            
             table_list_guias.insert("", "end", values=row)
@@ -472,6 +476,9 @@ def show_remesas(frame):
     #********** TABLE LIST  REMESAS **********#
     frame_search_remesa = ttk.Frame(frame,)
     frame_search_remesa.grid(row=0, column=0, columnspan=8, padx=10, pady=10, sticky="wens" )
+    for i in range(8):
+        frame_search_remesa.grid_columnconfigure(i, weight=1)
+    
     
     entry_cols = ("id_remesa", "manifiesto", "destino", "conductor", "fecha", "ingreso_operativo_total", "rentabilidad")
     table_list_remesas = ttk.Treeview(frame_search_remesa, columns= entry_cols, show="headings", height=10)
@@ -479,7 +486,7 @@ def show_remesas(frame):
         table_list_remesas.heading(col, text=col)
         table_list_remesas.column(col, width=180, stretch=False, anchor="center")
 
-    table_list_remesas.grid(row=0, column=0, sticky="we", padx=10, pady=5,)
+    table_list_remesas.grid(row=0, column=0, sticky="", padx=10, pady=5,)
     table_list_remesas.bind("<Double-1>", on_double_click)
     
     
@@ -487,7 +494,7 @@ def show_remesas(frame):
     #***********ENTRIES REMESA***********#
     
     frame_edit_remesa = ttk.Frame(frame_search_remesa)
-    frame_edit_remesa.grid(row=2, column=0, columnspan=2, padx=10, pady=10, sticky="wn")            
+    frame_edit_remesa.grid(row=2, column=0, columnspan=2, padx=10, pady=10, sticky="")            
     
     frame_search_single_remesa = ttk.Frame(frame_search_remesa,)
     frame_search_single_remesa.grid(row=1, column=0, columnspan=1, padx=10, pady=5, sticky="w")    
@@ -569,11 +576,19 @@ def show_remesas(frame):
     
     #***********TABLE LIST GUIAS-REMESA***********#
     #***********TABLE LIST GUIAS-REMESA***********#
-    list_camps = ("numero_guia", "estado", "destino", "destinatario", "unidades", "peso_Kg", "volumen_m3", "fecha_de_asignacion", "en_anexo", "en_factura")
+    list_camps = ("numero_guia", "estado", "destino", "destinatario", "unidades", "peso_Kg", "volumen_m3", "valor","fecha_de_asignacion", "en_anexo", "en_factura")
     table_list_guias = ttk.Treeview(frame_search_remesa, columns=(list_camps), show="headings", height=10)
-    table_list_guias.grid(row=3, column=0, padx=10, pady=10, sticky="w")
+    table_list_guias.grid(row=3, column=0, padx=10, pady=10, sticky="")
     
+    vscrollbar = ttk.Scrollbar(frame_search_remesa, orient="vertical", command=table_list_guias.yview)
+    vscrollbar.grid(row=3, column=2, sticky="ns")
+    table_list_guias.configure(yscrollcommand=vscrollbar.set)
     
+    hscrollbar = ttk.Scrollbar(frame_search_remesa, orient="horizontal", command=table_list_guias.xview)
+    hscrollbar.grid(row=4, column=0, sticky="we")
+    table_list_guias.configure(xscrollcommand=hscrollbar.set)
+    
+
     tabs_remesas.add(frame_search_remesa, text="Buscar Remesa")
     
     list_remesas()

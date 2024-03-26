@@ -9,6 +9,7 @@ import guias, remesas, anexos, destinos, config
 window = tk.Tk()
 window.title("Control Guias y Facturacion Intermodal")
 window.geometry("1360x768")
+window.resizable(False, False)
 
 window.grid_columnconfigure(1, weight=1)
 
