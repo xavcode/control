@@ -12,7 +12,7 @@ def show_remesas(frame):
   
   def show_table():
     def add_guia_to_remesa(number):
-      connection = sqlite3.connect("D:/intermodal/control/control_intermodal.db")    
+      connection = sqlite3.connect(config.db_path)  
       query = f"SELECT guias.numero_guia, guias.unidades, guias.peso_Kg, guias.destino, guias.fecha_de_asignacion, guias.destinatario, destinos.valor_destino,  (guias.balance_RCE + guias.balance_FCE) AS balance_cobro  FROM guias JOIN destinos ON destinos.destino = guias.destino WHERE guias.numero_guia = {number};"
       result = connection.execute(query)
       data = result.fetchall()    

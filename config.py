@@ -29,18 +29,18 @@ def show_config(frame):
     frame_config.grid_propagate(False)
 
     # create a label for the btn config
-    label = tk.Label(frame_config, text="Seleccionar Base de Datos", font=("Arial", 18))
+    label = ttk.Label(frame_config, text="Seleccionar Base de Datos", font=("Arial", 18))
     label.grid(row=0, column=0, columnspan=2, pady=10)
 
-    entry_db = tk.Entry(frame_config) 
+    entry_db = ttk.Entry(frame_config) 
     entry_db.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=5, pady=5 )
     entry_db.insert(0, db_path)
     
     #clean the entry before insert the new path
-    btn_config = tk.Button(frame_config, text="Seleccionar", command=lambda: [entry_db.delete(0, tk.END), entry_db.insert(0, select_db())])
+    btn_config = ttk.Button(frame_config, text="Seleccionar", command=lambda: [entry_db.delete(0, tk.END), entry_db.insert(0, select_db())])
     btn_config.grid(row=2, column=0, columnspan=1, sticky="nsew", padx=5, pady=5)
     
-    btn_save = tk.Button(frame_config, text="Guardar", command=lambda: save_db_path(entry_db.get()))
+    btn_save = ttk.Button(frame_config, text="Guardar", command=lambda: save_db_path(entry_db.get()))
     btn_save.grid(row=2, column=1, columnspan=1, sticky="nsew", padx=5, pady=5)
     
     #****-------------------------------------------------****#
@@ -48,25 +48,25 @@ def show_config(frame):
     separator.grid(row=3, column=0, columnspan=2, sticky="ew", pady=10)    
         
     #Consecutives
-    label_consecutives = tk.Label(frame_config, text="Consecutivos", font=("Arial", 18))
+    label_consecutives = ttk.Label(frame_config, text="Consecutivos", font=("Arial", 18))
     label_consecutives.grid(row=4, column=0, pady=10)
     
-    label_letter = tk.Label(frame_config, text="Letras", font=("Arial", 12))
+    label_letter = tk.Label(frame_config, text="Letras", font=("Arial", 10))
     label_letter.grid(row=5, column=0, sticky="w", padx=5, pady=5)
-    letters_consecutives = tk.Entry(frame_config)
+    letters_consecutives = ttk.Entry(frame_config)
     letters_consecutives.grid(row=6, column=0, sticky="w", padx=5, pady=5)
-    letters_consecutives.insert('end', 'RTP')
+    letters_consecutives.insert('end', 'RTP-24')
     
-    label_numbers = tk.Label(frame_config, text="Numeros", font=("Arial", 12))
+    label_numbers = ttk.Label(frame_config, text="Numeros", font=("Arial", 10))
     label_numbers.grid(row=5, column=1, sticky="w", padx=5, pady=5)
-    numbers_consecutives = tk.Entry(frame_config)
+    numbers_consecutives = ttk.Entry(frame_config)
     numbers_consecutives.grid(row=6, column=1, sticky="w", padx=5, pady=5)
     numbers_consecutives.insert('end', '0001')
     
     separator2 = ttk.Separator(frame_config, orient='horizontal')
     separator2.grid(row=7, column=0, columnspan=2, sticky="ew", pady=15)
     
-    btn_save_changes = tk.Button(frame_config, text="Guardar Cambios")
+    btn_save_changes = ttk.Button(frame_config, text="Guardar Cambios")
     btn_save_changes.grid(row=8, column=0, columnspan=2, pady=10)
     
     

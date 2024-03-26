@@ -21,18 +21,10 @@ def show_destinos(frame):
         conn.close()
     
     frame_destinos = ttk.LabelFrame(frame, text="Destinos") 
-    frame_destinos.grid(row=0, column=0, pady=10, padx=30)
-    frame_destinos.grid_propagate(False)
-    frame_destinos.grid_rowconfigure(0, weight=1)
-    # frame_destinos.grid_columnconfigure(0, weight=1)
-    
-    # # Create a label widget for "Destinos"
-    # label = tk.Label(frame_destinos, text="Destinos")
-    # label.grid(row=0, column=0, padx=10, pady=10, sticky="n")
+    frame_destinos.grid(row=0, column=0, pady=10, padx=30, sticky="")
 
-    frame_table_destinos = ttk.LabelFrame(frame_destinos)
-    frame_table_destinos.grid(row=0, column=0, pady=10, padx=20)
-    
+    frame_table_destinos = ttk.Frame(frame_destinos)
+    frame_table_destinos.grid(row=0, column=0, pady=10, padx=20,  sticky="")
     
     # Create a treeview widget to display the destinations
     table = ttk.Treeview(frame_table_destinos, columns=("id_destino", "destino", "valor_1", "valor_2", "valor_3",), show="headings", height=25, selectmode="browse")
@@ -52,32 +44,32 @@ def show_destinos(frame):
     
     scrollbar = ttk.Scrollbar(frame_table_destinos, orient="vertical", command=table.yview)
     table.configure(yscrollcommand=scrollbar.set)
-    scrollbar.grid(row=1, column=5, sticky="ns")
+    scrollbar.grid(row=1, column=2, sticky="ns")
 
     print_destinos()
     
     frame_form_add_destinos = ttk.LabelFrame(frame_destinos, text="Agregar Destinos")
-    frame_form_add_destinos.grid(row=0, column=1, pady=10, padx=20)
+    frame_form_add_destinos.grid(row=0, column=1, pady=10, padx=20, sticky="nwe")
     
     # Create labels and entry widgets for adding destinations and their values
-    label_destino = tk.Label(frame_form_add_destinos, text="Destino:")
+    label_destino = ttk.Label(frame_form_add_destinos, text="Destino:")
     label_destino.grid(row=0, column=0, padx=10, pady=5, sticky="e")
-    entry_destino = tk.Entry(frame_form_add_destinos)
+    entry_destino = ttk.Entry(frame_form_add_destinos)
     entry_destino.grid(row=0, column=1, padx=10, pady=5)
 
-    label_valor_1 = tk.Label(frame_form_add_destinos, text="Valor 1:")
+    label_valor_1 = ttk.Label(frame_form_add_destinos, text="Valor 1:")
     label_valor_1.grid(row=1, column=0, padx=10, pady=5, sticky="e")
-    entry_valor_1 = tk.Entry(frame_form_add_destinos)
+    entry_valor_1 = ttk.Entry(frame_form_add_destinos)
     entry_valor_1.grid(row=1, column=1, padx=10, pady=5)
 
-    label_valor_2 = tk.Label(frame_form_add_destinos, text="Valor 2:")
+    label_valor_2 = ttk.Label(frame_form_add_destinos, text="Valor 2:")
     label_valor_2.grid(row=2, column=0, padx=10, pady=5, sticky="e")
-    entry_valor_2 = tk.Entry(frame_form_add_destinos)
+    entry_valor_2 = ttk.Entry(frame_form_add_destinos)
     entry_valor_2.grid(row=2, column=1, padx=10, pady=5)
 
-    label_valor_3 = tk.Label(frame_form_add_destinos, text="Valor 3:")
+    label_valor_3 = ttk.Label(frame_form_add_destinos, text="Valor 3:")
     label_valor_3.grid(row=3, column=0, padx=10, pady=5, sticky="e")
-    entry_valor_3 = tk.Entry(frame_form_add_destinos)
+    entry_valor_3 = ttk.Entry(frame_form_add_destinos)
     entry_valor_3.grid(row=3, column=1, padx=10, pady=5)
 
     # Create a button to add the destination
@@ -105,7 +97,8 @@ def show_destinos(frame):
         # Refresh the table to display the new destination
         print_destinos()
 
-    button_add_destino = tk.Button(frame_form_add_destinos, text="Add Destino", command=add_destino)
-    button_add_destino.grid(row=4, column=0, columnspan=2, padx=10, pady=10)
-    
-    
+    button_add_destino = ttk.Button(frame_form_add_destinos, text="Add Destino", command=add_destino)
+    button_add_destino.grid(row=4, columnspan=2, padx=10, pady=10, sticky="we")
+
+    btn_aceptar = ttk.Button(frame_destinos, text="Aceptar" )
+    btn_aceptar.grid(row=4, column=0, padx=10, pady=10, sticky="")

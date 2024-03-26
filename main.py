@@ -42,8 +42,8 @@ btn_anexos = ttk.Button(frame_botones, text="Anexos", width=12, command=lambda: 
 btn_anexos.grid(row=3, column=0, pady=10)
 # Botón para mostrar el formulario de anexos
 
-btn_anexos = ttk.Button(frame_botones, text="Destinos", width=12, command=lambda: destinos.show_destinos(main_frame))
-btn_anexos.grid(row=4, column=0, pady=10)
+btn_destinos = ttk.Button(frame_botones, text="Destinos", width=12, command=lambda: destinos.show_destinos(main_frame))
+btn_destinos.grid(row=4, column=0, pady=10)
 
 
 btn_facturacion = ttk.Button(frame_botones, text="Facturación", width=12, state="disabled") 

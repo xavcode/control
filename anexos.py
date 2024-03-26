@@ -114,14 +114,15 @@ def show_anexos(frame):
     scrollbar.grid(row=1, column=2, sticky="ns")
     tree.configure(yscrollcommand=scrollbar.set)
     
-    frame_add_anexos = ttk.LabelFrame(frame_anexos)
+    frame_add_anexos = ttk.Frame(frame_anexos)
     frame_add_anexos.grid(row=2, column=0, columnspan=2, padx=10, pady=10, sticky='se')
     
+    
     # Button to add anexos
-    btn_add_anexos = tk.Button(frame_add_anexos, text="Agregar Anexos", command=lambda: extract_table())
+    btn_add_anexos = ttk.Button(frame_add_anexos, text="Agregar Anexos", command=lambda: extract_table())
     btn_add_anexos.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
     
-    btn_export_anexos = tk.Button(frame_add_anexos, text="Exportar excel", command=lambda: export_pdf())
+    btn_export_anexos = ttk.Button(frame_add_anexos, text="Exportar excel", command=lambda: export_pdf())
     btn_export_anexos.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
     
     return frame_anexos 
