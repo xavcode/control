@@ -7,17 +7,14 @@ def extraer_numero_desde_pdf(pdf_path):
     # Crear un objeto PDFReader
     pdf_reader = PyPDF2.PdfReader(file)
       
-    # Extraer texto del PDF
-    texto = ""
-    for page in pdf_reader.pages:
-      texto += page.extract_text()
-            
-      # Cerrar el archivo
+    # Extraer texto de la primera página del PDF
+    texto = pdf_reader.pages[0].extract_text()
+        
+    # Cerrar el archivo
     file.close()
 
-    # Utilizar expresiones regulares para encontrar el número deseado
-    # Aquí puedes ajustar el patrón según el formato de tu número
-    patron_numero = r'Documento No: (\d+)' # Por ejemplo, buscamos un texto que diga "Número: " seguido de uno o más dígitos
+    # Utilizar expresiones regulares para encontrar el número deseado    
+    patron_numero = r'Documento No: (\d+)' 
     resultado = re.search(patron_numero, texto)
 
     if resultado:
@@ -27,12 +24,12 @@ def extraer_numero_desde_pdf(pdf_path):
         return None
 
 # Ruta al archivo PDF
-pdf_path = 'anexo2024_1.pdf'
+pdf_path = '719624 17-02-2024.pdf'
 
 # Llamar a la función para extraer el número
 numero_extraido = extraer_numero_desde_pdf(pdf_path)
 
 if numero_extraido:
-    print("El número extraído es:", numero_extraido)
+  print("El número extraído es:", numero_extraido)
 else:
-    print("No se pudo encontrar el número en el PDF.")
+  print("No se pudo encontrar el número en el PDF.")
