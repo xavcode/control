@@ -40,7 +40,7 @@ def show_guias(frame):
     
         connection = sqlite3.connect(config.db_path)
         # Execute a SQL query to search for the guia number
-        query = f"SELECT estado, numero_guia, fecha_de_asignacion, remitente, destino, destinatario, direccion_de_entrega, unidades, peso_Kg, volumen_m3, ultima_causal, fecha_ultima_causal, telefono FROM guias WHERE numero_guia = '{number}'"
+        query = f"SELECT estado, numero_guia, fecha_de_asignacion, remitente, destino, destinatario, direccion_de_entrega, unidades, peso_Kg, volumen_m3, ultima_causal, fecha_ultima_causal,  (balance_RCE + balance_FCE) AS balance_cobro,  telefono FROM guias WHERE numero_guia = '{number}'"
         result = connection.execute(query)
 
         # Process the query result
@@ -80,14 +80,17 @@ def show_guias(frame):
             ttk.Label(frame_row, text="Volumen (m3):").grid(row=9, column=0, sticky="w")
             ttk.Label(frame_row, text=row[9]).grid(row=9, column=1, sticky="w")
 
-            ttk.Label(frame_row, text="Última Causal:").grid(row=11, column=0, sticky="w")
-            ttk.Label(frame_row, text=row[10]).grid(row=11, column=1, sticky="w")
+            ttk.Label(frame_row, text="Última Causal:").grid(row=10, column=0, sticky="w")
+            ttk.Label(frame_row, text=row[10]).grid(row=10, column=1, sticky="w")
 
-            ttk.Label(frame_row, text="Fecha Última Causal:").grid(row=12, column=0, sticky="w")
-            ttk.Label(frame_row, text=row[11]).grid(row=12, column=1, sticky="w")
+            ttk.Label(frame_row, text="Fecha Última Causal:").grid(row=11, column=0, sticky="w")
+            ttk.Label(frame_row, text=row[11]).grid(row=11, column=1, sticky="w")
+            
+            ttk.Label(frame_row, text="Balance de Cobro:").grid(row=12, column=0, sticky="w")
+            ttk.Label(frame_row, text=row[12]).grid(row=12, column=1, sticky="w")
 
             ttk.Label(frame_row, text="Teléfono:").grid(row=13, column=0, sticky="w")
-            ttk.Label(frame_row, text=row[12]).grid(row=13, column=1, sticky="w")
+            ttk.Label(frame_row, text=row[13]).grid(row=13, column=1, sticky="w")
 
         # Close the database connection
         connection.close()

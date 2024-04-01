@@ -8,6 +8,7 @@ import sqlite3
 
 import config
 import pandas as pd
+# from ventana_destinos import select_destino
 from tkinter import filedialog
 
 def show_remesas(frame):
@@ -142,7 +143,7 @@ def show_remesas(frame):
         data = result.fetchall()
         connection.close()
         for row in data:   
-            print(row)
+            
             entry_guia.insert(0, row[0])   
             entry_unidades.insert(0, row[1])
             entry_peso.insert(0, row[2])
@@ -151,8 +152,8 @@ def show_remesas(frame):
             entry_fecha_asignacion.insert(0, row[5])
             entry_cliente.insert(0, row[6])
             entry_valor.insert(0, row[7])
-            entry_balance_cobro.insert(0, row[8])       
-        
+            entry_balance_cobro.insert(0, row[8])
+                    
     def calc_utilidad():        
         total_ingreso = int(entry_ingreso_operativo_total.get())
         total_gasto = int(entry_gasto_operativo.get())
@@ -199,6 +200,25 @@ def show_remesas(frame):
         
         connection = sqlite3.connect(config.db_path)
         query = f"INSERT INTO remesas (id_remesa, manifiesto, conductor, destino, fecha, total_uds, total_kg, total_vol, cobro_total, flete_coord_rtp, ingreso_operativo_total, gasto_operativo, utilidad, rentabilidad) VALUES ('{id_remesa}', '{id_manifiesto}', '{conductor}', '{destino_remesa}', '{fecha_remesa}', '{total_uds}', '{total_kg}', '{total_volumen}', '{cobro_total}', '{flete_coord_rtp}', '{ingreso_operativo_total}', '{gasto_operativo}', '{utilidad}', '{rentabilidad}');"
+        
+        #create the list for insert guias
+        rows_to_insert = []
+        for row in table.get_children():
+            row_values = table.item(row)["values"]
+            rows_to_insert.append(row_values)
+      
+        #create the query for the insert
+        query_remesas = f"INSERT INTO remesas_guias (remesa_id, guia_id ) VALUES "
+        
+        for i in range(len(rows_to_insert)):
+            row = rows_to_insert[i]
+            query_remesas += f"('{id_remesa}', '{row[0]}')"
+            if i != len(rows_to_insert) - 1:
+                query_remesas += ", "
+            else:
+                query_remesas += ";"
+        
+        #inserting remesa with headers
         try:
             result = connection.execute(query)
             connection.commit()
@@ -206,28 +226,19 @@ def show_remesas(frame):
                 messagebox.showinfo("", "Remesa guardada con éxito")
         except Exception as e:
             messagebox.showerror("", f"Error al guardar la remesa: {str(e)}")
-        connection.close()
-    def get_destinos_db() :
-        connection = sqlite3.connect(config.db_path)
-        query = "SELECT destino FROM destinos;"
-        result = connection.execute(query)
-        data = result.fetchall()
         
-        lst = [item[0] for item in data]        
-        cbbx_destino_remesa["values"] = lst
+        #inserting guias to remesa
+        try:
+            result = connection.execute(query_remesas)
+            connection.commit()
+            if result:
+                messagebox.showinfo("", "Guias guardadas con éxito")
+        except Exception as e:
+            messagebox.showerror("", f"Error al guardar las guias: {str(e)}")
+            
+        
         connection.close()
-        # def suggest_destinos(event,):
-        #     # typed_text = cbbx_destino_remesa.get()
-        #     # matching_destinos = [destino for destino in cbbx_destino_remesa["values"] if typed_text in destino]
-        #     # cbbx_destino_remesa["values"] = matching_destinos
-        #     value = event.widget.get()
-        #     if value == '':
-        #         cbbx_destino_remesa["values"] = lst
-        #     else:
-        #         data=[]
-        #         for item in list: # type: ignore
-        #             if value.upper() in item.upper():
-        #                 data.append(item)
+      
     
     def enable_entries():
         entry_id_remesa.state(["!readonly"])
@@ -271,38 +282,87 @@ def show_remesas(frame):
         entry_utilidad.delete(0, tk.END)
         entry_rentabilidad.delete(0, tk.END)
         
+    def list_remesas():
+        connection = sqlite3.connect(config.db_path)
+        query = f"SELECT remesas.id_remesa, remesas.manifiesto, remesas.destino, remesas.conductor, remesas.fecha, remesas.ingreso_operativo_total, remesas.rentabilidad FROM remesas ;"
         
+        #QUERY FOR GET THE DESTINO ALSO. 
+        # query = f"SELECT remesas.id_remesa, remesas.manifiesto, remesas.destino, remesas.conductor, remesas.fecha, remesas.ingreso_operativo_total, remesas.rentabilidad FROM remesas JOIN destinos ON destinos.destino = remesas.destino;"
+        
+        result = connection.execute(query)
+        data = result.fetchall()
+        
+        for row in data:
+             # Set the column headings
+            table_list_remesas.heading("id_remesa", text="ID Remesa")
+            table_list_remesas.heading("manifiesto", text="Manifiesto")
+            table_list_remesas.heading("destino", text="Destino")
+            table_list_remesas.heading("conductor", text="Conductor")
+            table_list_remesas.heading("fecha", text="Fecha")
+            table_list_remesas.heading("ingreso_operativo_total", text="Ingreso Operativo Total")
+            table_list_remesas.heading("rentabilidad", text="Rentabilidad")
+            table_list_remesas.insert("", "end", values=row)
+        connection.close()  
+    def get_destinos_db() :
+        connection = sqlite3.connect(config.db_path)
+        query = "SELECT destino FROM destinos;"
+        result = connection.execute(query)
+        data = result.fetchall()
+        options = [item[0] for item in data]        
+        connection.close()
+        return options
+    def clean_table_remesas():
+            table_list_remesas.delete(*table_list_remesas.get_children())
         
     def import_remesa():
         file_path = filedialog.askopenfilename(filetypes=[("Excel Files", "*.xlsx")])
         if file_path:           
             # Convierte el DataFrame a string y divídelo por líneas para crear una lista de filas
-            df = pd.read_excel(file_path)
+            df = pd.read_excel(file_path, header=None)
             
             def get_remesa(df):
+                clean_entries_remesa()
+                # Check if the last row contains the word "Total"
+                #if ther is title has a header, is removed
+                first_row = df.iloc[0].to_string()
+                if 'relacion' in first_row.lower():
+                    df= df.drop(df.index[0])
 
-                clean_entries_remesa()                
-                conductor = df.iat[0, 0].split(':')[1].strip()
-                conductor = conductor.replace("CONDUCTOR", "").strip()
+                #get the drivers name
+                conductor = df.iloc[0].to_string()
+                if 'conductor' in conductor.lower():
+                    conductor = str(df.iat[0,0])
+                    conductor = conductor.split(':')[1].strip()
+                    conductor = conductor.replace("CONDUCTOR", "").strip()
 
+                #get the headers data
                 id_remesa = df.iat[0, 5].strip()
                 manifiesto = df.iat[0, 7].strip()
                 fecha = str(df.iat[1, 8])
                 formated_date = datetime.strptime(fecha, '%Y-%m-%d %H:%M:%S')
-                formated_date = formated_date.strftime('%d-%m-%Y')                
-                
-                #prepare data for table
-                
+                formated_date = formated_date.strftime('%d-%m-%Y')
+
+                # delete last row if has total word 
+                del_total_row = df.iloc[-1].to_string()
+                if 'total' in del_total_row.lower():
+                    df = df.drop(df.index[-1])
+
                 df.columns = df.iloc[1]
                 df = df.iloc[2:]
-                df = df.drop(df.tail(1).index)
+                df.rename(columns={df.columns[8]: 'COBRO'},  inplace=True)
 
+                # dated formated with dd/mm/yy format
+                df.iloc[:, 5] = pd.to_datetime(df.iloc[:, 5]).dt.strftime('%d-%m-%Y')
+
+                # delect characters in column cobros
+                df['COBRO'] = df['COBRO'].apply(lambda x: 0 if not str(x).isdigit() else x)
                 kg_sum = df.iloc[:, 3].sum()
                 cobro_sum = df.iloc[:, 8].sum()
                 uds_sum = df.iloc[:, 2].sum()
                 cobro_sum = df.iloc[:, 8].sum()
                 valor_sum = df.iloc[:, 6].sum()
-                df.iloc[:, 5] = pd.to_datetime(df.iloc[:, 5]).dt.strftime('%d-%m-%Y')
+                registros = df.values.tolist()
+
                           
                 entry_id_remesa.insert(0, id_remesa)            
                 entry_manifiesto.insert(0, manifiesto)
@@ -318,17 +378,12 @@ def show_remesas(frame):
                 guias = [row[1:] for row in guias]
                 for guia in guias:
                     table.insert("", "end", values=guia)
-                        
-                    
-                
-                # print(guias)                
             get_remesa(df)
-            
-            
-        
+        clean_table_remesas()
+        list_remesas()
+    
     tabs_remesas = ttk.Notebook(frame,)
     tabs_remesas.grid(row=0, column=0, padx=10, pady=10, sticky="nswe")
-    
     tabs_remesas.grid_rowconfigure(0, weight=1)
 
     frame_remesas = ttk.Frame(frame )
@@ -403,17 +458,16 @@ def show_remesas(frame):
     entry_rentabilidad.grid(row=4, column=1, padx=5, pady=5)
     entry_rentabilidad.bind("<KeyRelease>", lambda event: calc_gans())
     
-    ttk.Label(frame_form_remesa, text="Destino:").grid(row=4, column=2, sticky="w", padx=10)
-    cbbx_destino_remesa = ttk.Combobox(frame_form_remesa)
-    # cbbx_destino_remesa.set("DESTINO")
+    destinos_db = get_destinos_db()
+    ttk.Label(frame_form_remesa, text="Destino:").grid(row=4, column=2, sticky="w", padx=10)    
+    cbbx_destino_remesa = ttk.Combobox(frame_form_remesa, values=destinos_db, state="readonly")
     cbbx_destino_remesa.grid(row=4, column=3, padx=5, pady=5)
-    
-    # get_destinos_db()
+
     
     
     #* FRAME TREE VIEW
     #? TABLE FOR PREVIEW
-    list_camps = ("numero_guia", "unidades", "peso_Kg", "volumen_m3", "destino", "fecha_de_asignacion", "cliente", "valor", "balance_cobro")
+    list_camps = ("numero_guia", "unidades", "peso_Kg",  "destino", "fecha_de_asignacion", "valor", "cliente","balance_cobro",) # add volumen when be needed
     table = ttk.Treeview(frame_add_remesa,columns=list_camps, show="headings", height=10)
     table.grid(row=3, column=0, columnspan=80, sticky="wes", padx=(10,20), pady=10,)
 
@@ -426,21 +480,22 @@ def show_remesas(frame):
     table.column("numero_guia", width=120, stretch=False, anchor="center")
     table.column("unidades", width=60, stretch=False, anchor="center")
     table.column("peso_Kg", width=50, stretch=False, anchor="center")
-    table.column("volumen_m3", width=50, stretch=False, anchor="center")
-    table.column("destino", width=150, stretch=False, anchor="center")
+    # table.column("volumen_m3", width=50, stretch=False, anchor="center")
+    table.column("destino", width=100, stretch=False, anchor="center")
     table.column("fecha_de_asignacion", width=100, stretch=False, anchor="center")
-    table.column("cliente", width=300, stretch=False, anchor="center")
     table.column("valor", width=100, stretch=False, anchor="center")
+    table.column("cliente", width=300, stretch=False, anchor="center")
     table.column("balance_cobro", width=100, stretch=False, anchor="center")
+    
     # Configurar encabezados de columna
     table.heading("numero_guia", text="Guia")
     table.heading("unidades", text="Uds")
     table.heading("peso_Kg", text="Kg")
-    table.heading("volumen_m3", text="Vol(M3)")
+    # table.heading("volumen_m3", text="Vol(M3)")
     table.heading("destino", text="Destino")
     table.heading("fecha_de_asignacion", text="F.Asignacion")
-    table.heading("cliente", text="Cliente")
     table.heading("valor", text="Valor")
+    table.heading("cliente", text="Cliente")
     table.heading("balance_cobro", text="Bal. de Cobro")
 
 
@@ -506,23 +561,7 @@ def show_remesas(frame):
     #********************************************************* FRAME TAB SEARCH REMESA******************************************************** #
     #********************************************************* FRAME TAB SEARCH REMESA******************************************************** #
     
-    def list_remesas():
-        connection = sqlite3.connect(config.db_path)
-        query = f"SELECT remesas.id_remesa, remesas.manifiesto, remesas.destino, remesas.conductor, remesas.fecha, remesas.ingreso_operativo_total, remesas.rentabilidad FROM remesas JOIN destinos ON destinos.destino = remesas.destino;"
-        result = connection.execute(query)
-        data = result.fetchall()
-        
-        for row in data:
-            table_list_remesas.insert("", "end", values=row)
-             # Set the column headings
-            table_list_remesas.heading("id_remesa", text="ID Remesa")
-            table_list_remesas.heading("manifiesto", text="Manifiesto")
-            table_list_remesas.heading("destino", text="Destino")
-            table_list_remesas.heading("conductor", text="Conductor")
-            table_list_remesas.heading("fecha", text="Fecha")
-            table_list_remesas.heading("ingreso_operativo_total", text="Ingreso Operativo Total")
-            table_list_remesas.heading("rentabilidad", text="Rentabilidad")
-        connection.close()
+    
     
     def on_double_click(event):
         item = table_list_remesas.focus()
@@ -551,9 +590,33 @@ def show_remesas(frame):
         def entries_state_clear():
             for entry in entries:
                 entry.delete(0, tk.END)
+    
+        def delete_remesa(id_remesa):
+            try:
+                connection = sqlite3.connect(config.db_path)
+                cursor = connection.cursor()
+
+                # Primera consulta para eliminar de la tabla remesas_guias
+                query_remesas_guias = f"DELETE FROM remesas_guias WHERE remesa_id = '{id_remesa}';"
+                cursor.execute(query_remesas_guias)
+
+                # Segunda consulta para eliminar de la tabla remesas
+                query_remesas = f"DELETE FROM remesas WHERE id_remesa = '{id_remesa}';"
+                cursor.execute(query_remesas)
+
+                connection.commit()
+                connection.close()
+
+                messagebox.showinfo("", "Remesa eliminada con éxito")
+            except sqlite3.Error as e:
+                messagebox.showerror("", f"Error al eliminar la remesa: {e}")
+            
+            clean_table_remesas()
+            list_remesas()
+        
         
         connection = sqlite3.connect(config.db_path)
-        query = f"SELECT r.id_remesa, r.manifiesto, r.conductor, d.destino, r.fecha, r.total_kg, r.total_uds, total_vol, r.flete_coord_rtp, r.ingreso_operativo_total, r. gasto_operativo, r.utilidad, r.rentabilidad FROM remesas AS r JOIN destinos  AS d ON d.id_destino = r.destino_id WHERE id_remesa = '{id_remesa}'";       
+        query = f"SELECT r.id_remesa, r.manifiesto, r.conductor, d.destino, r.fecha, r.total_kg, r.total_uds, total_vol, r.flete_coord_rtp, r.ingreso_operativo_total, r. gasto_operativo, r.utilidad, r.rentabilidad FROM remesas AS r JOIN destinos  AS d ON d.destino = r.destino WHERE id_remesa = '{id_remesa}'";       
         result = connection.execute(query)
         data = result.fetchall() 
         connection.close()                
@@ -563,6 +626,9 @@ def show_remesas(frame):
             
             btn_save_remesa = ttk.Button(frame_search_single_remesa, text="Guardar", command= lambda: entries_state_disabled(), )
             btn_save_remesa.grid(row=1, column=4, sticky="w", padx=5, pady=5)
+            
+            btn_delete_remesa = ttk.Button(frame_search_single_remesa, text="Borrar", command= lambda: delete_remesa(entryid_remesa.get()) )
+            btn_delete_remesa.grid(row=1, column=5, sticky="w", padx=5, pady=5)
             
             entries_state_enabled()  
             entries_state_clear()
@@ -580,9 +646,7 @@ def show_remesas(frame):
             entryutilidad.insert(0, data[0][11])
             entryrentabilidad.insert(0,str(data[0][12]))
             entries_state_disabled()
-        
-        # entries = [entry_id_remesa, entry_manifiesto, entry_conductor, entry_destino, entry_fecha, entry_total_kg, entry_total_uds, entry_total_volumen, entry_flete_coord_rtp, entry_ingreso_operativo_total, entry_gasto_operativo, entry_utilidad, entry_rentabilidad]                             
-    
+
     def search_guias_remesa(id_remesa):
         connection = sqlite3.connect(config.db_path)
         query = f"SELECT guias.numero_guia, guias.estado, guias.destino, guias.destinatario, guias.unidades, guias.peso_Kg, guias.volumen_m3, destinos.valor_destino_1, guias.fecha_de_asignacion, guias.en_anexo, guias.en_factura FROM guias JOIN remesas_guias ON guias.numero_guia = remesas_guias.guia_id JOIN remesas ON remesas.id_remesa = remesas_guias.remesa_id JOIN destinos ON destinos.destino = guias.destino WHERE remesas.id_remesa = '{id_remesa}';"
@@ -591,7 +655,6 @@ def show_remesas(frame):
         table_list_guias.delete(*table_list_guias.get_children())      
        
         for row in data:            
-            print(row)
             # Configurar encabezados de columna
             # table_list_guias.column("#0", width=0, stretch=False, anchor="center")
             table_list_guias.column("numero_guia", width=150, stretch=False, anchor="center")
@@ -627,6 +690,7 @@ def show_remesas(frame):
         search_remesa(id_remesa)
         search_guias_remesa(id_remesa)
     
+
     
     #********** TABLE LIST  REMESAS **********#
     #********** TABLE LIST  REMESAS **********#
@@ -748,3 +812,4 @@ def show_remesas(frame):
     tabs_remesas.add(frame_search_remesa, text="Buscar Remesa")
     
     list_remesas()
+    
