@@ -100,12 +100,11 @@ def show_guias(frame):
         # Create a connection to the database
         connection = sqlite3.connect(config.db_path)
         # Execute a SQL query to fetch all the guias
-        query = "SELECT estado, numero_guia, fecha_de_asignacion, remitente, destino, destinatario, direccion_de_entrega, unidades, peso_Kg, volumen_m3, ultima_causal, fecha_ultima_causal, telefono FROM guias"
+        query = "SELECT estado, numero_guia, fecha_de_asignacion, remitente, destino, destinatario, direccion_de_entrega, unidades, peso_Kg, volumen_m3, ultima_causal, fecha_ultima_causal, (balance_RCE + balance_FCE) AS balance_cobro, telefono, strftime('%d %m %Y', fecha_insercion) FROM guias ORDER BY fecha_insercion DESC"
         result = connection.execute(query)
         data = result.fetchall()
         for row in data:
             table.insert("", "end", values=row)
-        
         
         connection.close()
     
@@ -114,7 +113,6 @@ def show_guias(frame):
     frame_guias.grid_propagate(False)
     frame_guias.grid_columnconfigure(0, weight=1)
     frame_guias.grid_columnconfigure(1, weight=1)
-    
     
 
     frame_buscar_guias = ttk.LabelFrame(frame_guias, )
@@ -150,7 +148,7 @@ def show_guias(frame):
     ##************************************************************
 
 
-    list_camp = ("Estado", "Numero_guia", "F. Asignacion", "Remitente", "Destino", "Destinatario", "Direccion_de_entrega", "Unidades", "Peso_Kg", "Volumen_m3", "Ultima_causal", "Fecha_ultima_causal", "Telefono")
+    list_camp = ("Estado", "Numero_guia", "F. Asignacion", "Remitente", "Destino", "Destinatario", "Direccion_de_entrega", "Unidades", "Peso_Kg", "Volumen_m3", "Ultima_causal", "Fecha_ultima_causal", "balance_cobro","Telefono")
 
     
     table = ttk.Treeview(frame_guias, columns=(list_camp), show="headings", height=15)
@@ -171,6 +169,7 @@ def show_guias(frame):
     table.column("Volumen_m3", width=50, stretch=False, anchor="center")
     table.column("Ultima_causal", width=100, stretch=False, anchor="center")
     table.column("Fecha_ultima_causal", width=100, stretch=False, anchor="center")
+    table.column("balance_cobro", width=100, stretch=False, anchor="center")    
     table.column("Telefono", width=100, stretch=False, anchor="center")
 
     

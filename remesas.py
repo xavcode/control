@@ -153,7 +153,6 @@ def show_remesas(frame):
             entry_cliente.insert(0, row[6])
             entry_valor.insert(0, row[7])
             entry_balance_cobro.insert(0, row[8])
-                    
     def calc_utilidad():        
         total_ingreso = int(entry_ingreso_operativo_total.get())
         total_gasto = int(entry_gasto_operativo.get())
@@ -197,6 +196,9 @@ def show_remesas(frame):
         utilidad = entry_utilidad.get()
         rentabilidad = entry_rentabilidad.get()
         destino_remesa = cbbx_destino_remesa.get()
+        if not destino_remesa:
+                messagebox.showerror("", "El campo Destino no puede estar vacío")
+                return        
         
         connection = sqlite3.connect(config.db_path)
         query = f"INSERT INTO remesas (id_remesa, manifiesto, conductor, destino, fecha, total_uds, total_kg, total_vol, cobro_total, flete_coord_rtp, ingreso_operativo_total, gasto_operativo, utilidad, rentabilidad) VALUES ('{id_remesa}', '{id_manifiesto}', '{conductor}', '{destino_remesa}', '{fecha_remesa}', '{total_uds}', '{total_kg}', '{total_volumen}', '{cobro_total}', '{flete_coord_rtp}', '{ingreso_operativo_total}', '{gasto_operativo}', '{utilidad}', '{rentabilidad}');"
@@ -222,8 +224,6 @@ def show_remesas(frame):
         try:
             result = connection.execute(query)
             connection.commit()
-            if result:
-                messagebox.showinfo("", "Remesa guardada con éxito")
         except Exception as e:
             messagebox.showerror("", f"Error al guardar la remesa: {str(e)}")
         
@@ -232,14 +232,41 @@ def show_remesas(frame):
             result = connection.execute(query_remesas)
             connection.commit()
             if result:
-                messagebox.showinfo("", "Guias guardadas con éxito")
+                messagebox.showinfo("", "Remesa guardada con éxito")
         except Exception as e:
             messagebox.showerror("", f"Error al guardar las guias: {str(e)}")
             
         
         connection.close()
-      
-    
+        clean_entries_remesa()
+        clean_table_remesas()
+        list_remesas()         
+    def delete_remesa(id_remesa):
+            try:
+                confirmed = messagebox.askyesno("Confirmar", f"¿Estás seguro de borrar la remesa {id_remesa}?")
+                if not confirmed:
+                    return
+                connection = sqlite3.connect(config.db_path)
+                cursor = connection.cursor()
+
+                # Primera consulta para eliminar de la tabla remesas_guias
+                query_remesas_guias = f"DELETE FROM remesas_guias WHERE remesa_id = '{id_remesa}';"
+                
+                cursor.execute(query_remesas_guias)
+
+                # Segunda consulta para eliminar de la tabla remesas
+                query_remesas = f"DELETE FROM remesas WHERE id_remesa = '{id_remesa}';"
+                cursor.execute(query_remesas)
+
+                connection.commit()
+                connection.close()
+
+                messagebox.showinfo("", "Remesa eliminada con éxito")
+            except sqlite3.Error as e:
+                messagebox.showerror("", f"Error al eliminar la remesa: {e}")
+            
+            clean_table_remesas()
+            list_remesas()
     def enable_entries():
         entry_id_remesa.state(["!readonly"])
         entry_manifiesto.state(["!readonly"])
@@ -253,8 +280,7 @@ def show_remesas(frame):
         entry_ingreso_operativo_total.state(["!readonly"])
         entry_gasto_operativo.state(["!readonly"])
         entry_utilidad.state(["!readonly"])
-        entry_rentabilidad.state(["!readonly"])
-    
+        entry_rentabilidad.state(["!readonly"])  
     def disable_entries():
         entry_total_uds.state(["readonly"])
         entry_total_kg.state(["readonly"])
@@ -281,13 +307,10 @@ def show_remesas(frame):
         entry_gasto_operativo.delete(0, tk.END)
         entry_utilidad.delete(0, tk.END)
         entry_rentabilidad.delete(0, tk.END)
-        
+        cbbx_destino_remesa.set('')      
     def list_remesas():
         connection = sqlite3.connect(config.db_path)
-        query = f"SELECT remesas.id_remesa, remesas.manifiesto, remesas.destino, remesas.conductor, remesas.fecha, remesas.ingreso_operativo_total, remesas.rentabilidad FROM remesas ;"
-        
-        #QUERY FOR GET THE DESTINO ALSO. 
-        # query = f"SELECT remesas.id_remesa, remesas.manifiesto, remesas.destino, remesas.conductor, remesas.fecha, remesas.ingreso_operativo_total, remesas.rentabilidad FROM remesas JOIN destinos ON destinos.destino = remesas.destino;"
+        query = f"SELECT remesas.id_remesa, remesas.manifiesto, remesas.destino, remesas.conductor, remesas.fecha, remesas.ingreso_operativo_total, remesas.rentabilidad,(SELECT COUNT(*) FROM remesas_guias WHERE remesas_guias.remesa_id = remesas.id_remesa) AS total_guias,(SELECT COUNT(*) FROM remesas_guias INNER JOIN guias ON remesas_guias.guia_id = guias.numero_guia WHERE remesas_guias.remesa_id = remesas.id_remesa AND guias.en_factura <> 'no') AS guias_facturadas,(SELECT COUNT(*) FROM remesas_guias INNER JOIN guias ON remesas_guias.guia_id = guias.numero_guia WHERE remesas_guias.remesa_id = remesas.id_remesa AND guias.en_factura = 'no') AS guias_sin_facturar FROM remesas ORDER BY remesas.id_remesa DESC;"
         
         result = connection.execute(query)
         data = result.fetchall()
@@ -299,8 +322,11 @@ def show_remesas(frame):
             table_list_remesas.heading("destino", text="Destino")
             table_list_remesas.heading("conductor", text="Conductor")
             table_list_remesas.heading("fecha", text="Fecha")
-            table_list_remesas.heading("ingreso_operativo_total", text="Ingreso Operativo Total")
+            table_list_remesas.heading("ingreso_operativo_total", text="Ing. Op. Total")
             table_list_remesas.heading("rentabilidad", text="Rentabilidad")
+            table_list_remesas.heading("total_guias", text="Total Guias")
+            table_list_remesas.heading("guias_facturadas", text="G. Facturadas")
+            table_list_remesas.heading("guias_sin_facturar", text="G. Pendientes")
             table_list_remesas.insert("", "end", values=row)
         connection.close()  
     def get_destinos_db() :
@@ -312,8 +338,7 @@ def show_remesas(frame):
         connection.close()
         return options
     def clean_table_remesas():
-            table_list_remesas.delete(*table_list_remesas.get_children())
-        
+            table_list_remesas.delete(*table_list_remesas.get_children())       
     def import_remesa():
         file_path = filedialog.askopenfilename(filetypes=[("Excel Files", "*.xlsx")])
         if file_path:           
@@ -361,8 +386,6 @@ def show_remesas(frame):
                 uds_sum = df.iloc[:, 2].sum()
                 cobro_sum = df.iloc[:, 8].sum()
                 valor_sum = df.iloc[:, 6].sum()
-                registros = df.values.tolist()
-
                           
                 entry_id_remesa.insert(0, id_remesa)            
                 entry_manifiesto.insert(0, manifiesto)
@@ -378,9 +401,9 @@ def show_remesas(frame):
                 guias = [row[1:] for row in guias]
                 for guia in guias:
                     table.insert("", "end", values=guia)
+            # clean_table_remesas()
+            # list_remesas()
             get_remesa(df)
-        clean_table_remesas()
-        list_remesas()
     
     tabs_remesas = ttk.Notebook(frame,)
     tabs_remesas.grid(row=0, column=0, padx=10, pady=10, sticky="nswe")
@@ -591,28 +614,7 @@ def show_remesas(frame):
             for entry in entries:
                 entry.delete(0, tk.END)
     
-        def delete_remesa(id_remesa):
-            try:
-                connection = sqlite3.connect(config.db_path)
-                cursor = connection.cursor()
-
-                # Primera consulta para eliminar de la tabla remesas_guias
-                query_remesas_guias = f"DELETE FROM remesas_guias WHERE remesa_id = '{id_remesa}';"
-                cursor.execute(query_remesas_guias)
-
-                # Segunda consulta para eliminar de la tabla remesas
-                query_remesas = f"DELETE FROM remesas WHERE id_remesa = '{id_remesa}';"
-                cursor.execute(query_remesas)
-
-                connection.commit()
-                connection.close()
-
-                messagebox.showinfo("", "Remesa eliminada con éxito")
-            except sqlite3.Error as e:
-                messagebox.showerror("", f"Error al eliminar la remesa: {e}")
-            
-            clean_table_remesas()
-            list_remesas()
+        
         
         
         connection = sqlite3.connect(config.db_path)
@@ -659,7 +661,7 @@ def show_remesas(frame):
             # table_list_guias.column("#0", width=0, stretch=False, anchor="center")
             table_list_guias.column("numero_guia", width=150, stretch=False, anchor="center")
             table_list_guias.column("estado", width=180, stretch=False, anchor="center")
-            table_list_guias.column("destino", width=200, stretch=False, anchor="center")
+            table_list_guias.column("destino", width=150, stretch=False, anchor="center")
             table_list_guias.column("destinatario", width=200, stretch=False, anchor="center")
             table_list_guias.column("unidades", width=50, stretch=False, anchor="center")
             table_list_guias.column("peso_Kg", width=50, stretch=False, anchor="center")
@@ -680,8 +682,17 @@ def show_remesas(frame):
             table_list_guias.heading("valor", text="Valor")
             table_list_guias.heading("fecha_de_asignacion", text="F. Asignacion")
             table_list_guias.heading("en_anexo", text="Anexo")
-            table_list_guias.heading("en_factura", text="Factura")            
-            table_list_guias.insert("", "end", values=row)
+            table_list_guias.heading("en_factura", text="Factura")       
+            
+            # table_list_guias.insert("", "end", values=row)     
+            
+            if row[10] != 'no':
+                table_list_guias.insert("", "end", values=row, tags=("paid_invoice",))
+            elif row[9] != 'no':
+                table_list_guias.insert("", "end", values=row, tags=("pend_invoice",))
+            else: 
+                table_list_guias.insert("", "end", values=row,  )
+            
             
         connection.close()
         return data
@@ -700,13 +711,13 @@ def show_remesas(frame):
         frame_search_remesa.grid_columnconfigure(i, weight=1)
     
     
-    entry_cols = ("id_remesa", "manifiesto", "destino", "conductor", "fecha", "ingreso_operativo_total", "rentabilidad")
+    entry_cols = ("id_remesa", "manifiesto", "destino", "conductor", "fecha", "ingreso_operativo_total", "rentabilidad", "total_guias", "guias_facturadas", "guias_sin_facturar")
     table_list_remesas = ttk.Treeview(frame_search_remesa, columns= entry_cols, show="headings", height=10)
     for col in entry_cols:
         table_list_remesas.heading(col, text=col)
-        table_list_remesas.column(col, width=180, stretch=False, anchor="center")
+        table_list_remesas.column(col, width=120, stretch=False, anchor="center")
 
-    table_list_remesas.grid(row=0, column=0, sticky="", padx=10, pady=5,)
+    table_list_remesas.grid(row=0, column=0, sticky="we", padx=10, pady=5,)
     table_list_remesas.bind("<Double-1>", on_double_click)
     
     
@@ -796,9 +807,15 @@ def show_remesas(frame):
     
     #***********TABLE LIST GUIAS-REMESA***********#
     #***********TABLE LIST GUIAS-REMESA***********#
+    
+    
     list_camps = ("numero_guia", "estado", "destino", "destinatario", "unidades", "peso_Kg", "volumen_m3", "valor","fecha_de_asignacion", "en_anexo", "en_factura")
     table_list_guias = ttk.Treeview(frame_search_remesa, columns=(list_camps), show="headings", height=10)
     table_list_guias.grid(row=3, column=0, padx=10, pady=10, sticky="")
+    
+    table_list_guias.tag_configure("paid_invoice", background="#cff6c8")
+    table_list_guias.tag_configure("pend_invoice", background="#fefda6")
+   
     
     vscrollbar = ttk.Scrollbar(frame_search_remesa, orient="vertical", command=table_list_guias.yview)
     vscrollbar.grid(row=3, column=2, sticky="ns")

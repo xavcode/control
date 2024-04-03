@@ -14,11 +14,22 @@ window.resizable(False, False)
 window.grid_columnconfigure(1, weight=1)
 
 
-main_frame = ttk.Frame(window, width=1200, height=700)
-main_frame.grid(row=0, column=1, sticky="wens", pady=10, )
+main_frame = ttk.LabelFrame(window, width=1200, height=700)
+main_frame.grid(row=0, column=1, sticky="wens", padx=10, pady=10, )
 main_frame.grid_rowconfigure(0, weight=1)
 main_frame.grid_columnconfigure(0, weight=1)
 main_frame.grid_propagate(False)
+
+def main_frame_show():
+    for widget in main_frame.winfo_children():
+        widget.destroy()
+
+   
+main_frame.grid(row=0, column=1, sticky="wens", padx=10, pady=10)
+image_path = "assets/intermodal_camion.png"
+image = tk.PhotoImage(file=image_path)
+label = ttk.Label(main_frame, image=image)
+label.grid(row=0, column=0, sticky="") 
 
 # Frame para los botones
 
@@ -27,7 +38,7 @@ frame_botones.grid(row=0,column=0, sticky="nswe", padx=10, pady=20)
 frame_botones.config()
 
 # Botón para mostrar el boton home
-btn_home = ttk.Button(frame_botones, text="Inicio", width=12)
+btn_home = ttk.Button(frame_botones, text="Inicio", width=12, command=lambda: main_frame_show())
 btn_home.grid(row=0, column=0, pady=10)
 
 # Botón para mostrar el formulario de guías
