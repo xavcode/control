@@ -2,12 +2,26 @@ import os
 import pandas as pd
 import pdfplumber
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
 import PyPDF2
 import re
 import sqlite3
 
+from tkinter import *
+from tkinter import ttk, filedialog, messagebox
+
 import config
+
+def _convert_stringval(value):
+    if hasattr(value, 'typename'):
+        value = str(value)
+        try:
+            value = int(value)
+        except (ValueError, TypeError):
+            pass
+    return value
+
+ttk._convert_stringval = _convert_stringval # type: ignore
+
 
 def show_anexos(frame):
     # create main frame for anexos
@@ -64,8 +78,12 @@ def show_anexos(frame):
 
             df = pd.DataFrame(full_table)
             df = df.dropna(axis="columns", how="all")
+            
+            # set names to columns            
             df.columns = [ "GUIA", "PRODUCTO", "DESTINO", "UDS", "PESO", "FTE FIJO", "FTE VARIABLE", "FTE TOTAL", "TIPO",]
-            # set names to columns
+            
+            #setting types to columns
+            df["GUIA"] = df["GUIA"].astype(str)
             df[["UDS", "FTE FIJO", "PESO", "FTE VARIABLE", "FTE TOTAL"]] = df[
                 ["UDS", "FTE FIJO", "PESO", "FTE VARIABLE", "FTE TOTAL"]
             ].apply(pd.to_numeric, errors="coerce")
@@ -74,10 +92,13 @@ def show_anexos(frame):
             )
             df[["FTE FIJO", "FTE TOTAL", "FTE VARIABLE"]] = df[["FTE FIJO", "FTE TOTAL", "FTE VARIABLE"]].astype(int)
 
-            # Insert data into the treeview
+            
             for index, row in df.iterrows():
-                tree.insert("", int(index), values=row.tolist())  # type: ignore
-
+                values = [str(value) for value in row]
+                tree.insert("", "end", values=values)
+                
+            # print(type(tree.item(tree.get_children()[0])["values"][0]))   
+            
             sum_items = int(df["UDS"].sum())
             sum_fte = int((df["FTE TOTAL"]).sum())
             # sum_kg = (df["PESO"]).sum()
@@ -93,7 +114,7 @@ def show_anexos(frame):
             df.loc["Total Unidades"] = ["","","","","","","","TOTAL UNIDADES",sum_items,]
             df.loc["Sum Values"] = ["", "", "", "", "", "", "", "VALOR TOTAL", sum_fte]
 
-        return df
+        return df 
 
     def export_pdf():
         export = extract_table()
@@ -121,13 +142,13 @@ def show_anexos(frame):
         fte_total = entry_total_fte.get()
 
         list_guias_to_insert = []
-        list_guias_to_update = []
         try : 
             for row in tree.get_children():
-                list_guias_values = tree.get_children()
+                list_guias_values = [tree.item(row)["values"][0], tree.item(row)["values"][2]]
+                print(list_guias_values)
                 list_guias_values = tree.item(row)["values"]
                 list_guias_to_insert.append((list_guias_values[0], list_guias_values[2], list_guias_values[7], list_guias_values[8]))
-                list_guias_to_update.append(list_guias_values[0] )
+                
         
         except Exception as e:
             messagebox.showerror("", f"Error al obtener la lista: {str(e)}")
@@ -155,22 +176,12 @@ def show_anexos(frame):
                 query_anexos += ", "
             else:
                 query_anexos += ";" 
+        
         try:
             result = connection.execute(query_anexos)
             connection.commit()
         except Exception as e:
             messagebox.showerror("", f"Error al guardar las guias del anexo: {str(e)}")
-        
-         #update the guia table with the anexo_id
-        guias_to_update = ','.join(["'" + str(x) + "'" for x in list_guias_to_update])
-        
-        try:
-            query_update_guias = f"UPDATE guias SET en_anexo = '{id_anexo}' WHERE numero_guia IN ({guias_to_update});"
-            result = connection.execute(query_update_guias)
-            connection.commit()
-        except Exception as e:
-            messagebox.showerror("", f"Error al actualizar las guias con el anexo_id: {str(e)}")
-            
         
         connection.close()
         clean_table_show_anexos()
@@ -350,9 +361,7 @@ def show_anexos(frame):
             
             connection.close()
             
-            
-            
-        
+
     
     # Create the search frame
     frame_search = ttk.Frame(frame_search_anexos)

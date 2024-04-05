@@ -1,10 +1,10 @@
+import re
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import pandas as pd
 import sqlite3
 from sqlite3 import IntegrityError
 import config
-
 
 # define ui guias module
 def show_guias(frame):
@@ -20,7 +20,8 @@ def show_guias(frame):
 
         # Rest of the code remains the same
         df.drop(df.index[0], axis=0, inplace=True)
-        df.iloc[:, 1] = df.iloc[:, 1].str[3:]
+        df['Numero guia'] = df['Numero guia'].apply(lambda x: re.sub(r'\D', '', str(x)))
+        # df.iloc[:, 1] = df.iloc[:, 1].str[3:]
         df.head()
 
         # Create a connection to the database
@@ -36,11 +37,22 @@ def show_guias(frame):
         messagebox.showinfo("", "Guias importadas con éxito")
         connection.close()
 
-    def search_guias( number):
+    def search_guias(number):
     
         connection = sqlite3.connect(config.db_path)
         # Execute a SQL query to search for the guia number
-        query = f"SELECT estado, numero_guia, fecha_de_asignacion, remitente, destino, destinatario, direccion_de_entrega, unidades, peso_Kg, volumen_m3, ultima_causal, fecha_ultima_causal,  (balance_RCE + balance_FCE) AS balance_cobro,  telefono FROM guias WHERE numero_guia = '{number}'"
+        query = f'''
+                    SELECT guias.estado, guias.numero_guia, guias.fecha_de_asignacion, guias.remitente, guias.destino, 
+                    guias.destinatario, guias.direccion_de_entrega, guias.unidades, guias.peso_Kg, guias.volumen_m3, guias.ultima_causal, guias.fecha_ultima_causal, 
+                    (guias.balance_RCE + guias.balance_FCE) AS balance_cobro, guias.telefono, 
+                    COALESCE (remesas_guias.remesa_id,'SIN REMESA' )AS 'remesa' , 
+                    COALESCE (anexos_guias.anexo_id, 'SIN ANEXO') AS 'anexo'
+                    FROM guias 
+                    LEFT JOIN remesas_guias ON guias.numero_guia = remesas_guias.guia_id
+                    LEFT JOIN anexos_guias ON guias.numero_guia = anexos_guias.guia_id
+                    WHERE numero_guia = '{number}'
+                '''
+        
         result = connection.execute(query)
 
         # Process the query result
@@ -91,6 +103,12 @@ def show_guias(frame):
 
             ttk.Label(frame_row, text="Teléfono:").grid(row=13, column=0, sticky="w")
             ttk.Label(frame_row, text=row[13]).grid(row=13, column=1, sticky="w")
+            
+            ttk.Label(frame_row, text="Remesa:").grid(row=14, column=0, sticky="w")
+            ttk.Label(frame_row, text=row[14]).grid(row=14, column=1, sticky="w")
+            
+            ttk.Label(frame_row, text="Anexo:").grid(row=15, column=0, sticky="w")
+            ttk.Label(frame_row, text=row[15]).grid(row=15, column=1, sticky="w")
 
         # Close the database connection
         connection.close()
@@ -100,6 +118,21 @@ def show_guias(frame):
         # Create a connection to the database
         connection = sqlite3.connect(config.db_path)
         # Execute a SQL query to fetch all the guias
+        #in case that want to show the remesa_id and anexo id_ use this query 
+        # ''' 
+        #     SELECT guias.estado, guias.numero_guia, guias.fecha_de_asignacion, guias.remitente, guias.destino, 
+        #     guias.destinatario, guias.direccion_de_entrega, guias.unidades, guias.peso_Kg, guias.volumen_m3, guias.ultima_causal, guias.fecha_ultima_causal, 
+        #     (guias.balance_RCE + guias.balance_FCE) AS balance_cobro, guias.telefono, 
+        #     COALESCE (remesas_guias.remesa_id,'SIN REMESA' )AS 'remesa' , 
+        #     COALESCE (anexos_guias.anexo_id, 'SIN ANEXO') AS 'anexo'
+        #     FROM guias 
+        #     LEFT JOIN remesas_guias ON guias.numero_guia = remesas_guias.guia_id
+        #     LEFT JOIN anexos_guias ON guias.numero_guia = anexos_guias.guia_id
+        #     WHERE numero_guia = '{number}'
+        # '''
+    
+        
+        
         query = "SELECT estado, numero_guia, fecha_de_asignacion, remitente, destino, destinatario, direccion_de_entrega, unidades, peso_Kg, volumen_m3, ultima_causal, fecha_ultima_causal, (balance_RCE + balance_FCE) AS balance_cobro, telefono, strftime('%d %m %Y', fecha_insercion) FROM guias ORDER BY fecha_insercion DESC"
         result = connection.execute(query)
         data = result.fetchall()

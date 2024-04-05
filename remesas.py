@@ -1,15 +1,29 @@
-from datetime import datetime
 import tkinter as tk
-from tkinter import *
-from tkinter import ttk
-from tkinter import messagebox
-from tkcalendar import DateEntry
 import sqlite3
 
 import config
 import pandas as pd
+
+from datetime import datetime
+from tkinter import *
+from tkinter import ttk, messagebox,filedialog
+from tkcalendar import DateEntry
+
+
+
+def _convert_stringval(value):
+    if hasattr(value, 'typename'):
+        value = str(value)
+        try:
+            value = int(value)
+        except (ValueError, TypeError):
+            pass
+    return value
+
+ttk._convert_stringval = _convert_stringval # type: ignore
+
+
 # from ventana_destinos import select_destino
-from tkinter import filedialog
 
 def show_remesas(frame):
     for widget in frame.winfo_children():
@@ -219,7 +233,7 @@ def show_remesas(frame):
                 query_remesas += ", "
             else:
                 query_remesas += ";"
-        
+        print(query_remesas)
         #inserting remesa with headers
         try:
             result = connection.execute(query)
@@ -310,7 +324,29 @@ def show_remesas(frame):
         cbbx_destino_remesa.set('')      
     def list_remesas():
         connection = sqlite3.connect(config.db_path)
-        query = f"SELECT remesas.id_remesa, remesas.manifiesto, remesas.destino, remesas.conductor, remesas.fecha, remesas.ingreso_operativo_total, remesas.rentabilidad,(SELECT COUNT(*) FROM remesas_guias WHERE remesas_guias.remesa_id = remesas.id_remesa) AS total_guias,(SELECT COUNT(*) FROM remesas_guias INNER JOIN guias ON remesas_guias.guia_id = guias.numero_guia WHERE remesas_guias.remesa_id = remesas.id_remesa AND guias.en_factura <> 'no') AS guias_facturadas,(SELECT COUNT(*) FROM remesas_guias INNER JOIN guias ON remesas_guias.guia_id = guias.numero_guia WHERE remesas_guias.remesa_id = remesas.id_remesa AND guias.en_factura = 'no') AS guias_sin_facturar FROM remesas ORDER BY remesas.id_remesa DESC;"
+        query = f'''
+                    SELECT 
+                        remesas.id_remesa, 
+                        remesas.manifiesto, 
+                        remesas.destino, 
+                        remesas.conductor, 
+                        remesas.fecha, 
+                        remesas.ingreso_operativo_total, 
+                        remesas.rentabilidad, 
+                        COUNT(remesas_guias.remesa_id) AS total_guias,
+                        COUNT(CASE WHEN guias.en_factura <> 'no' THEN 1 END) AS guias_facturadas,
+                        COUNT(CASE WHEN guias.en_factura = 'no' THEN 1 END) AS guias_sin_facturar 
+                    FROM 
+                        remesas
+                    LEFT JOIN 
+                        remesas_guias ON remesas.id_remesa = remesas_guias.remesa_id
+                    LEFT JOIN 
+                        guias ON remesas_guias.guia_id = guias.numero_guia
+                    GROUP BY 
+                        remesas.id_remesa
+                    ORDER BY 
+                        remesas.id_remesa DESC;
+                '''
         
         result = connection.execute(query)
         data = result.fetchall()
@@ -379,8 +415,13 @@ def show_remesas(frame):
                 # dated formated with dd/mm/yy format
                 df.iloc[:, 5] = pd.to_datetime(df.iloc[:, 5]).dt.strftime('%d-%m-%Y')
 
-                # delect characters in column cobros
+                # delet characters in column cobros
+                
+                df['COBRO'] = df['COBRO'].apply(lambda x: str(x).replace('.', ''))
+                df['COBRO'] = df['COBRO'].apply(lambda x: ''.join(c for c in x if c.isdigit()))
                 df['COBRO'] = df['COBRO'].apply(lambda x: 0 if not str(x).isdigit() else x)
+                df['COBRO'] = pd.to_numeric(df['COBRO'])                
+                
                 kg_sum = df.iloc[:, 3].sum()
                 cobro_sum = df.iloc[:, 8].sum()
                 uds_sum = df.iloc[:, 2].sum()
@@ -651,7 +692,32 @@ def show_remesas(frame):
 
     def search_guias_remesa(id_remesa):
         connection = sqlite3.connect(config.db_path)
-        query = f"SELECT guias.numero_guia, guias.estado, guias.destino, guias.destinatario, guias.unidades, guias.peso_Kg, guias.volumen_m3, destinos.valor_destino_1, guias.fecha_de_asignacion, guias.en_anexo, guias.en_factura FROM guias JOIN remesas_guias ON guias.numero_guia = remesas_guias.guia_id JOIN remesas ON remesas.id_remesa = remesas_guias.remesa_id JOIN destinos ON destinos.destino = guias.destino WHERE remesas.id_remesa = '{id_remesa}';"
+        query = f'''
+                    SELECT 
+                        guias.numero_guia, 
+                        guias.estado, 
+                        guias.destino, 
+                        guias.destinatario, 
+                        guias.unidades, 
+                        guias.peso_Kg, 
+                        guias.volumen_m3, 
+                        destinos.valor_destino_1, 
+                        guias.fecha_de_asignacion, 
+                        COALESCE(anexos_guias.anexo_id, 'SIN ANEXO') AS en_anexo,
+                        guias.en_factura
+                    FROM 
+                        guias 
+                    JOIN 
+                        remesas_guias ON guias.numero_guia = remesas_guias.guia_id 
+                    JOIN 
+                        remesas ON remesas.id_remesa = remesas_guias.remesa_id 
+                    JOIN 
+                        destinos ON destinos.destino = guias.destino 
+                    LEFT JOIN 
+                        anexos_guias ON guias.numero_guia = anexos_guias.guia_id
+                    WHERE 
+                        remesas.id_remesa = '{id_remesa}';                            
+                    '''
         result = connection.execute(query)
         data = result.fetchall()
         table_list_guias.delete(*table_list_guias.get_children())      
@@ -688,10 +754,10 @@ def show_remesas(frame):
             
             if row[10] != 'no':
                 table_list_guias.insert("", "end", values=row, tags=("paid_invoice",))
-            elif row[9] != 'no':
-                table_list_guias.insert("", "end", values=row, tags=("pend_invoice",))
+            # elif row[9] != 'no':
+            #     table_list_guias.insert("", "end", values=row, tags=("pend_invoice",))
             else: 
-                table_list_guias.insert("", "end", values=row,  )
+                table_list_guias.insert("", "end", values=row, tags=("pend_invoice",) )
             
             
         connection.close()
