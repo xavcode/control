@@ -33,7 +33,6 @@ def show_anexos(frame):
     tab_anexos.grid(row=0, column=0, sticky="nswe", padx=10, pady=10)
     tab_anexos.grid_rowconfigure(0, weight=1)
     
-    
     frame_anexos = ttk.Frame(frame,)
     frame_anexos.grid(row=0, column=0, columnspan=2, sticky="", padx= 20, pady=20)
     frame_anexos.grid_columnconfigure(0, weight=1)
@@ -145,7 +144,6 @@ def show_anexos(frame):
         try : 
             for row in tree.get_children():
                 list_guias_values = [tree.item(row)["values"][0], tree.item(row)["values"][2]]
-                print(list_guias_values)
                 list_guias_values = tree.item(row)["values"]
                 list_guias_to_insert.append((list_guias_values[0], list_guias_values[2], list_guias_values[7], list_guias_values[8]))
                 
@@ -340,7 +338,25 @@ def show_anexos(frame):
         connection = sqlite3.connect(config.db_path)
         #get the remesas and details of the anexo
         try:            
-            query_show_detail = f"SELECT anexos_guias.guia_id, COALESCE(remesas_guias.remesa_id, 'SIN REMESA') AS remesa_id, guias.destino, guias.unidades, guias.peso_Kg, anexos_guias.valor, anexos_guias.tipo FROM guias LEFT JOIN remesas_guias ON guias.numero_guia = remesas_guias.guia_id LEFT JOIN anexos_guias ON guias.numero_guia = anexos_guias.guia_id WHERE anexos_guias.anexo_id = '{id_anexo}' ORDER BY remesas_guias.remesa_id DESC;"
+            query_show_detail = f'''SELECT 
+                                        anexos_guias.guia_id, 
+                                        COALESCE(remesas_guias.remesa_id, 'SIN REMESA') AS remesa_id, 
+                                        COALESCE(guias.destino, 'SIN GUIA') AS destino, 
+                                        COALESCE(guias.unidades, 'N/A') AS unidades, 
+                                        COALESCE(guias.peso_Kg, 'N/A') AS peso_Kg, 
+                                        COALESCE(anexos_guias.valor, 'SIN GUIA') AS valor, 
+                                        COALESCE(anexos_guias.tipo, 'SIN GUIA') AS tipo
+                                    FROM 
+                                        anexos_guias 
+                                    LEFT JOIN 
+                                        guias ON anexos_guias.guia_id = guias.numero_guia 
+                                    LEFT JOIN 
+                                        remesas_guias ON guias.numero_guia = remesas_guias.guia_id 
+                                    WHERE 
+                                        anexos_guias.anexo_id = '{id_anexo}' 
+                                    ORDER BY 
+                                        remesas_guias.remesa_id DESC;
+                                '''
             result = connection.execute(query_show_detail).fetchall()
             for row in result:
                 tree_detail.insert("", "end", values=row)
@@ -361,8 +377,19 @@ def show_anexos(frame):
             
             connection.close()
             
-
+    def on_double_click(event):
+        item = event.selection()[0]
+        id_anexo = event.item(item)["values"][0]
+        get_detail_anexo(id_anexo)
+        print(id_anexo)
+        entry_search_anexo.delete(0, tk.END)
+        entry_search_anexo.insert(0, id_anexo)
     
+    def btnsearch_anexos(id_anexo):
+        id_anexo = entry_search_anexo.get()
+        clean_detail()
+        clean_anexo_summary()
+        get_detail_anexo(id_anexo)
     # Create the search frame
     frame_search = ttk.Frame(frame_search_anexos)
     frame_search.grid(row=0, column=0, padx=10, pady=10, sticky="e")
@@ -411,7 +438,7 @@ def show_anexos(frame):
     entry_search_anexo.grid(row=1, column=1, padx=5, pady=5)
 
     # Create the search button
-    btn_search = ttk.Button(frame_search_anexos_info, text="Buscar", command= lambda: get_detail_anexo(entry_search_anexo.get()))
+    btn_search = ttk.Button(frame_search_anexos_info, text="Buscar", command= lambda: btnsearch_anexos(entry_search_anexo.get()))
     btn_search.grid(row=1, column=2, padx=5, pady=5)
     
     btn_delete = ttk.Button(frame_search_anexos_info, text="Borrar Anexo", command= lambda: delete_anexo())
@@ -420,30 +447,31 @@ def show_anexos(frame):
     frame_cant_remesas = ttk.Frame(frame_search_anexos)
     frame_cant_remesas.grid(row=1, column=1, padx=10, pady=10, sticky="we")
     
-    label_remesas = ttk.Label(frame_cant_remesas, text="Remesas en anexo:")
+    label_remesas = ttk.Label(frame_cant_remesas, text=f"Remesas en el anexo: ")
     label_remesas.grid(row=0, column=0, padx=10, pady=5, sticky="w")
     
-    tree_anexo_summary = ttk.Treeview(frame_cant_remesas, height=3, show="headings", selectmode="browse")
-    tree_anexo_summary = ttk.Treeview(frame_cant_remesas, height=3, show="headings", selectmode="browse")
+    tree_anexo_summary = ttk.Treeview(frame_cant_remesas, height=5, show="headings", selectmode="browse")
     tree_anexo_summary.grid(row=1, column=0, sticky="w", padx=10, pady=0)
-
     
-    
-    tree_anexo_summary["columns"] = ("remesa", "guias", "valor", "saldo")
-    # tree_anexo_summary.column("#0", width=0, stretch=tk.NO)
+    tree_anexo_summary["columns"] = ("remesa", "guias", "valor")
+    # tree_anexo_summary.column("#0", width=0, stretch=tk.NO) 
     tree_anexo_summary.column("remesa", width=100, anchor="center") 
     tree_anexo_summary.column("guias", width=100, anchor="center")
     tree_anexo_summary.column("valor", width=100, anchor="center")
-    tree_anexo_summary.column("saldo", width=100, anchor="center")
+    # tree_anexo_summary.column("saldo", width=100, anchor="center")
     
     tree_anexo_summary.heading("remesa", text="Remesa")
     tree_anexo_summary.heading("guias", text="Guias")
     tree_anexo_summary.heading("valor", text="Valor")
-    tree_anexo_summary.heading("saldo", text="Saldo")
+    # tree_anexo_summary.heading("saldo", text="Saldo")
     # Add a scrollbar to the treeview
     scrollbar_summary = ttk.Scrollbar(frame_cant_remesas, orient="vertical", command=tree_anexo_summary.yview)
     scrollbar_summary.grid(row=1, column=1, sticky="ns")
     tree_anexo_summary.configure(yscrollcommand=scrollbar_summary.set)
+    
+    # ttk.Label(frame_cant_remesas, text = "exportar a excel").grid(row=2, column=0, padx=10, pady=5, sticky="ws") 
+    btn_exportar_excel = ttk.Button(frame_cant_remesas, text="Exportar Excel", command=lambda: export_pdf())
+    btn_exportar_excel.grid(row=1, column=2, padx=10, pady=5, sticky="sw")
     
     
 #********************************************************************************************************************    
@@ -492,4 +520,4 @@ def show_anexos(frame):
     
     tab_anexos.add(frame_search_anexos, text="Buscar Anexos")
     get_anexos()
-    return frame_anexos
+    # return frame_anexos
