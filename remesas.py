@@ -234,15 +234,16 @@ def show_remesas(frame):
             else:
                 query_remesas += ";"
         
-        #inserting remesa with headers
+        #     #inserting remesa with headers
+        #     try:
+        #         result = connection.execute(query)
+        #         connection.commit()
+        #     except Exception as e:
+        #         messagebox.showerror("", f"Error al guardar la remesa: {str(e)}")
+        
+        # #inserting guias to remesa
         try:
             result = connection.execute(query)
-            connection.commit()
-        except Exception as e:
-            messagebox.showerror("", f"Error al guardar la remesa: {str(e)}")
-        
-        #inserting guias to remesa
-        try:
             result = connection.execute(query_remesas)
             connection.commit()
             if result:
@@ -252,14 +253,17 @@ def show_remesas(frame):
                 clean_table_guias()
                 list_remesas()         
         except Exception as e:
-            messagebox.showerror("", f"Error al guardar las guias: {str(e)}")
+            error_message = str(e)
+            if "UNIQUE constraint failed" in error_message:
+                messagebox.showerror("", f"Ya existe la remesa: {id_remesa}")
             
-        
+            # messagebox.showerror("", f"Error al guardar las guias: {str(e)}")
+            
         connection.close()
        
     def delete_remesa(id_remesa):
             try:
-                confirmed = messagebox.askyesno("Confirmar", f"¿Estás seguro de borrar la remesa {id_remesa}?")
+                confirmed = messagebox.askyesno("Confirmar", f"Desea borrar la remesa {id_remesa}?")
                 if not confirmed:
                     return
                 connection = sqlite3.connect(config.db_path)
@@ -537,7 +541,7 @@ def show_remesas(frame):
     #? TABLE FOR PREVIEW
     list_camps = ("numero_guia", "unidades", "peso_Kg",  "destino", "fecha_de_asignacion", "valor", "cliente","balance_cobro",) # add volumen when be needed
     table = ttk.Treeview(frame_add_remesa,columns=list_camps, show="headings", height=10)
-    table.grid(row=3, column=0, columnspan=80, sticky="wes", padx=(10,20), pady=10,)
+    table.grid(row=3, column=0, columnspan=10, sticky="wes", padx=(10,20), pady=10,)
 
     # Create a vertical scrollbar
     scrollbar = ttk.Scrollbar(frame_add_remesa, orient="vertical", command=table.yview)
@@ -697,7 +701,7 @@ def show_remesas(frame):
     def search_guias_remesa(id_remesa):
         connection = sqlite3.connect(config.db_path)
         query = f'''
-                    SELECT 
+                   SELECT 
                         guias.numero_guia, 
                         guias.estado, 
                         guias.destino, 
@@ -708,7 +712,7 @@ def show_remesas(frame):
                         destinos.valor_destino_1, 
                         guias.fecha_de_asignacion, 
                         COALESCE(anexos_guias.anexo_id, 'SIN ANEXO') AS en_anexo,
-                        guias.en_factura
+                        COALESCE(facturas_guias.factura_id, 'SIN FACT.') AS en_factura
                     FROM 
                         guias 
                     JOIN 
@@ -719,8 +723,10 @@ def show_remesas(frame):
                         destinos ON destinos.destino = guias.destino 
                     LEFT JOIN 
                         anexos_guias ON guias.numero_guia = anexos_guias.guia_id
+                    LEFT JOIN 
+                        facturas_guias ON guias.numero_guia = facturas_guias.guia_id
                     WHERE 
-                        remesas.id_remesa = '{id_remesa}';                            
+                        remesas.id_remesa = '{id_remesa}';                      
                     '''
         result = connection.execute(query)
         data = result.fetchall()
@@ -756,14 +762,12 @@ def show_remesas(frame):
             
             # table_list_guias.insert("", "end", values=row)     
             
-            if row[10] != 'no':
+            if row[10] != 'SIN FACT.':
                 table_list_guias.insert("", "end", values=row, tags=("paid_invoice",))
             # elif row[9] != 'no':
             #     table_list_guias.insert("", "end", values=row, tags=("pend_invoice",))
             else: 
-                table_list_guias.insert("", "end", values=row, tags=("pend_invoice",) )
-            
-            
+                table_list_guias.insert("", "end", values=row, tags=("pend_invoice",) )     
         connection.close()
         return data
 
@@ -902,8 +906,6 @@ def show_remesas(frame):
     list_camps = ("numero_guia", "estado", "destino", "destinatario", "unidades", "peso_Kg", "volumen_m3", "valor","fecha_de_asignacion", "en_anexo", "en_factura")
     table_list_guias = ttk.Treeview(frame_search_remesa, columns=list_camps, show="headings", height=9)
     table_list_guias.grid(row=3, column=0,  columnspan=2, pady=10, sticky="we")
-    
-    table_list_guias.column('numero_guia', width=80, stretch=True, anchor="center")
     
     table_list_guias.tag_configure("paid_invoice", background="#cff6c8")
     table_list_guias.tag_configure("pend_invoice", background="#fefda6")   

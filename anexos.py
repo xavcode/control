@@ -40,9 +40,12 @@ def show_anexos(frame):
 
 
     def extract_table():
+        
         full_table = []
         file_path = filedialog.askopenfilename(filetypes=[("PDF Files", "*.pdf")])
         if file_path:
+            tree.delete(*tree.get_children())
+            clean_table_show_anexos()
             # for get the number of the anexo
             with open(file_path, "rb") as file:
                 # extraer el numero del anexo con re
@@ -73,45 +76,58 @@ def show_anexos(frame):
                         # Omitir la primera fila (suponiendo que es la fila de encabezados)
                         table_data = table[2:]  # Comenzar desde la segunda fila
                         # Agregar las filas de la tabla (sin los encabezados) a la lista
+
                         full_table.extend(table_data)
+                        df = pd.DataFrame(full_table)
+                        df = df.dropna(axis="columns", how="all")
+                        
+        # set names to columns            
+        df.columns = [ "GUIA", "PRODUCTO", "DESTINO", "UDS", "PESO", "FTE FIJO", "FTE VARIABLE", "FTE TOTAL", "TIPO",]
+        
+        #setting types to columns
+        df["GUIA"] = df["GUIA"].astype(str)
 
-            df = pd.DataFrame(full_table)
-            df = df.dropna(axis="columns", how="all")
-            
-            # set names to columns            
-            df.columns = [ "GUIA", "PRODUCTO", "DESTINO", "UDS", "PESO", "FTE FIJO", "FTE VARIABLE", "FTE TOTAL", "TIPO",]
-            
-            #setting types to columns
-            df["GUIA"] = df["GUIA"].astype(str)
-            df[["UDS", "FTE FIJO", "PESO", "FTE VARIABLE", "FTE TOTAL"]] = df[
-                ["UDS", "FTE FIJO", "PESO", "FTE VARIABLE", "FTE TOTAL"]
-            ].apply(pd.to_numeric, errors="coerce")
-            df[["FTE FIJO", "FTE VARIABLE", "FTE TOTAL"]] = (
-                df[["FTE FIJO", "FTE VARIABLE", "FTE TOTAL"]] * 1000
-            )
-            df[["FTE FIJO", "FTE TOTAL", "FTE VARIABLE"]] = df[["FTE FIJO", "FTE TOTAL", "FTE VARIABLE"]].astype(int)
+        # Antes de convertir a numérico, elimina los puntos de los números que representan miles
+        df['FTE FIJO'] = df['FTE FIJO'].str.replace('.', '').astype(float)
+        df['FTE VARIABLE'] = df['FTE VARIABLE'].str.replace('.', '').astype(float)
+        df['FTE TOTAL'] = df['FTE TOTAL'].str.replace('.', '').astype(float)
 
-            
-            for index, row in df.iterrows():
-                values = [str(value) for value in row]
-                tree.insert("", "end", values=values)
+        # Ahora puedes convertir a enteros o dejarlos como flotantes si así lo prefieres
+        df['FTE FIJO'] = df['FTE FIJO'].astype(int)
+        df['FTE VARIABLE'] = df['FTE VARIABLE'].astype(int)
+        df['FTE TOTAL'] = df['FTE TOTAL'].astype(int)
+
+
+        df[["UDS", "FTE FIJO", "PESO", "FTE VARIABLE", "FTE TOTAL"]] = df[
+            ["UDS", "FTE FIJO", "PESO", "FTE VARIABLE", "FTE TOTAL"]
+        ].apply(pd.to_numeric, errors="coerce")
                 
-            # print(type(tree.item(tree.get_children()[0])["values"][0]))   
+        
+        df[["FTE FIJO", "FTE TOTAL", "FTE VARIABLE"]] = df[["FTE FIJO", "FTE TOTAL", "FTE VARIABLE"]].astype(int)
+        
+        # Clear the treeview before inserting data
+        
+        
+        
+        for index, row in df.iterrows():
+            values = [str(value) for value in row]
+            tree.insert("", "end", values=values)
             
-            sum_items = int(df["UDS"].sum())
-            sum_fte = int((df["FTE TOTAL"]).sum())
-            # sum_kg = (df["PESO"]).sum()
-            num_records = int(len(df))
+        
+        sum_items = int(df["UDS"].sum())
+        sum_fte = int((df["FTE TOTAL"]).sum())
+        # sum_kg = (df["PESO"]).sum()
+        num_records = int(len(df))
 
-            entry_total_unidades.insert(0, str(sum_items))
-            entry_total_guias.insert(0, str(num_records))
-            entry_total_fte.insert(0, str(sum_fte))
+        entry_total_unidades.insert(0, str(sum_items))
+        entry_total_guias.insert(0, str(num_records))
+        entry_total_fte.insert(0, str(sum_fte))
 
-            # Add sum_items and sum_fte to the dataframe
-            df.loc["Blanck Space"] = ["", "", "", "", "", "", "", "", ""]
-            df.loc["Sum Items"] = ["","","","","","","","TOTAL GUIAS",num_records, ]
-            df.loc["Total Unidades"] = ["","","","","","","","TOTAL UNIDADES",sum_items,]
-            df.loc["Sum Values"] = ["", "", "", "", "", "", "", "VALOR TOTAL", sum_fte]
+        # Add sum_items and sum_fte to the dataframe
+        df.loc["Blanck Space"] = ["", "", "", "", "", "", "", "", ""]
+        df.loc["Sum Items"] = ["","","","","","","","TOTAL GUIAS",num_records, ]
+        df.loc["Total Unidades"] = ["","","","","","","","TOTAL UNIDADES",sum_items,]
+        df.loc["Sum Values"] = ["", "", "", "", "", "", "", "VALOR TOTAL", sum_fte]
 
         return df 
 
@@ -161,7 +177,8 @@ def show_anexos(frame):
             if result:
                 messagebox.showinfo("", "Anexo guardado con éxito")
         except Exception as e:
-            messagebox.showerror("", f"Error al guardar el anexo: {str(e)}")
+            if "UNIQUE constraint failed" in str(e):
+                messagebox.showerror("", f"El anexo {id_anexo} ya existe")
             
             
         #insert guias to anexos_guias
@@ -188,7 +205,7 @@ def show_anexos(frame):
     def delete_anexo():
         # id_anexo_del = entry_num_anexo.get()
         id_anexo_delete =  tree_search.item(tree_search.focus())["values"][0]
-        confirmed = messagebox.askyesno("Confirmar", f"¿Estás seguro de borrar el anexo {id_anexo_delete} ?")
+        confirmed = messagebox.askyesno("Confirmar", f"¿Desea borrar el anexo {id_anexo_delete} ?")
         if not confirmed:
             return
         connection = sqlite3.connect(config.db_path)
@@ -381,7 +398,7 @@ def show_anexos(frame):
         item = event.selection()[0]
         id_anexo = event.item(item)["values"][0]
         get_detail_anexo(id_anexo)
-        print(id_anexo)
+        
         entry_search_anexo.delete(0, tk.END)
         entry_search_anexo.insert(0, id_anexo)
     
