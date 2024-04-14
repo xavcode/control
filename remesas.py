@@ -39,14 +39,14 @@ def show_remesas(frame):
       total_utilidad = 0
       total_rentabilidad =0.0
             
-      for item in table.get_children():
-        unidades = int(table.item(item, "values")[1])
-        kilos = int(table.item(item, "values")[2])
-        valor = int(table.item(item, "values")[7])
-        cobro =int(table.item(item, "values")[8])
-        # valor = int(table.item(item, "values")[7])
+      for item in table_add_guia.get_children():
+        unidades = int(table_add_guia.item(item, "values")[1])
+        kilos = int(table_add_guia.item(item, "values")[2])
+        valor = int(table_add_guia.item(item, "values")[7])
+        cobro =int(table_add_guia.item(item, "values")[8])
+        # valor = int(table_add_guia.item(item, "values")[7])
         gasto_operativo = int(entry_gasto_operativo.get())
-        # total_ingreso = int(table.item(item, "values")[6])  # mismo valor que envio.
+        # total_ingreso = int(table_add_guia.item(item, "values")[6])  # mismo valor que envio.
         if gasto_operativo==0:
             gasto_operativo = 1
         
@@ -54,10 +54,9 @@ def show_remesas(frame):
         total_kilos += kilos
         total_valor += valor        
         total_cobro += cobro
-        total_volumen += int(table.item(item, "values")[3])
+        # total_volumen += int(table_add_guia.item(item, "values")[3])
         total_utilidad += (total_valor - total_valor)
         total_rentabilidad =+ (total_valor / gasto_operativo)
-        # total_ingreso += total_ingreso
         
       entry_total_uds.state(["!readonly"])
       entry_total_uds.delete(0,tk.END)
@@ -127,46 +126,61 @@ def show_remesas(frame):
         entry_valor.delete(0, tk.END)
         entry_balance_cobro.delete(0, tk.END)
         calc_total()                
-    def add_guia_to_remesa(number):
-        data = [
-            entry_guia.get(),
-            int(entry_unidades.get()),
-            int(entry_peso.get()),
-            int(entry_volumen.get()),
-            entry_destino.get(),
-            entry_fecha_asignacion.get(),
-            entry_cliente.get(),
-            int(entry_valor.get()),
-            int(entry_balance_cobro.get())
-        ]
-        table.insert("", "end", values=data)
-        calc_total()        
-        clean_fields_guia()
-        
-        return data  
+    def add_guia_to_remesa():
+        try: 
+            #Verify if the guia is already added
+            entry_guia_value = entry_guia.get().strip()
+            for item in table_add_guia.get_children():
+                if entry_guia_value == table_add_guia.item(item, "values")[0]:
+                    messagebox.showerror("", "La guia ya ha sido agregada")
+                    clean_fields_guia()
+                    entry_guia.insert(0, entry_guia_value)
+                    return
+            data = [
+                entry_guia_value,
+                int(entry_unidades.get()),
+                int(entry_peso.get()),
+                int(entry_volumen.get()),
+                entry_destino.get().strip(),
+                entry_fecha_asignacion.get().strip(),
+                entry_cliente.get().strip(),
+                int(entry_valor.get()),
+                int(entry_balance_cobro.get())
+            ]        
+            clean_fields_guia()
+            table_add_guia.insert("", "end", values=data)
+            # calc_total()        
+        except Exception as e:
+            messagebox.showerror("", f"Error al agregar la guia: {str(e)}")
+         
     def delete_row():
-        selected_item = table.selection()
+        selected_item = table_add_guia.selection()
         if selected_item:
-            table.delete(*selected_item)  # Convert the tuple to a string using the * operator
+            table_add_guia.delete(*selected_item)  # Convert the tuple to a string using the * operator
         calc_total()
     def get_info_guia(id_guia):
-        clean_fields_guia()
-        connection = sqlite3.connect(config.db_path)
-        query = f"SELECT guias.numero_guia, guias.unidades, guias.peso_Kg, guias.volumen_m3, guias.destino, guias.fecha_de_asignacion, guias.destinatario, destinos.valor_destino_1,  (guias.balance_RCE + guias.balance_FCE) AS balance_cobro  FROM guias JOIN destinos ON destinos.destino = guias.destino WHERE guias.numero_guia = '{id_guia}';"
-        result = connection.execute(query)
-        data = result.fetchall()
-        connection.close()
-        for row in data:   
-            
-            entry_guia.insert(0, row[0])   
-            entry_unidades.insert(0, row[1])
-            entry_peso.insert(0, row[2])
-            entry_volumen.insert(0, row[3])
-            entry_destino.insert(0, row[4])
-            entry_fecha_asignacion.insert(0, row[5])
-            entry_cliente.insert(0, row[6])
-            entry_valor.insert(0, row[7])
-            entry_balance_cobro.insert(0, row[8])
+        try:         
+            connection = sqlite3.connect(config.db_path)
+            query = f"SELECT guias.numero_guia, guias.unidades, guias.peso_Kg, guias.volumen_m3, guias.destino, guias.fecha_de_asignacion, guias.destinatario, destinos.valor_destino_1,  (guias.balance_RCE + guias.balance_FCE) AS balance_cobro  FROM guias JOIN destinos ON destinos.destino = guias.destino WHERE guias.numero_guia = '{id_guia}';"
+            result = connection.execute(query)
+            data = result.fetchall()
+            if not data :
+                messagebox.showerror("", "No se encontró la guia")
+                return
+            connection.close()
+            clean_fields_guia()
+            for row in data:                   
+                entry_guia.insert(0, row[0])   
+                entry_unidades.insert(0, row[1])
+                entry_peso.insert(0, row[2])
+                entry_volumen.insert(0, row[3])
+                entry_destino.insert(0, row[4])
+                entry_fecha_asignacion.insert(0, row[5])
+                entry_cliente.insert(0, row[6])
+                entry_valor.insert(0, row[7])
+                entry_balance_cobro.insert(0, row[8])
+        except Exception as e:
+            messagebox.showerror("", f"Error al obtener la guia o no se encuentra: {str(e)}")
     def calc_utilidad():        
         total_ingreso = int(entry_ingreso_operativo_total.get())
         total_gasto = int(entry_gasto_operativo.get())
@@ -219,8 +233,8 @@ def show_remesas(frame):
         
         #create the list for insert guias
         rows_to_insert = []
-        for row in table.get_children():
-            row_values = table.item(row)["values"]
+        for row in table_add_guia.get_children():
+            row_values = table_add_guia.item(row)["values"]
             rows_to_insert.append(row_values)
       
         #create the query for the insert
@@ -382,7 +396,7 @@ def show_remesas(frame):
     def clean_table_remesas():
             table_list_remesas.delete(*table_list_remesas.get_children())       
     def clean_table_guias():
-        table.delete(*table.get_children())
+        table_add_guia.delete(*table_add_guia.get_children())
     def import_remesa():
         file_path = filedialog.askopenfilename(filetypes=[("Excel Files", "*.xlsx")])
         if file_path:           
@@ -449,7 +463,7 @@ def show_remesas(frame):
                 guias = df.values.tolist()
                 guias = [row[1:] for row in guias]
                 for guia in guias:
-                    table.insert("", "end", values=guia)
+                    table_add_guia.insert("", "end", values=guia)
             # clean_table_remesas()
             # list_remesas()
             get_remesa(df)
@@ -474,12 +488,12 @@ def show_remesas(frame):
     tk.Label(frame_form_remesa, text="Remesa: (RTP)").grid(  row=1, column=0, sticky="w", padx=10 )
     entry_id_remesa = ttk.Entry(frame_form_remesa)
     entry_id_remesa.grid(row=1, column=1, padx=5, pady=5)
-    entry_id_remesa.insert(0, "RTP24-")
+    # entry_id_remesa.insert(0, "RTP24-")
 
     tk.Label(frame_form_remesa, text="Manifiesto:").grid( row=1, column=2, sticky="w", padx=10  )
     entry_manifiesto = ttk.Entry(frame_form_remesa)
     entry_manifiesto.grid(row=1, column=3, padx=5, pady=5)
-    entry_manifiesto.insert(0, "MCP24-")
+    # entry_manifiesto.insert(0, "MCP24-")
 
     ttk.Label(frame_form_remesa, text="Conductor:").grid( row=1, column=4, sticky="w", padx=10)
     entry_conductor = ttk.Entry(frame_form_remesa)
@@ -539,36 +553,36 @@ def show_remesas(frame):
     
     #* FRAME TREE VIEW
     #? TABLE FOR PREVIEW
-    list_camps = ("numero_guia", "unidades", "peso_Kg",  "destino", "fecha_de_asignacion", "valor", "cliente","balance_cobro",) # add volumen when be needed
-    table = ttk.Treeview(frame_add_remesa,columns=list_camps, show="headings", height=10)
-    table.grid(row=3, column=0, columnspan=10, sticky="wes", padx=(10,20), pady=10,)
+    list_camps = ("numero_guia", "unidades", "peso_Kg", "volumen_m3",  "destino", "fecha_de_asignacion", "cliente", "valor", "balance_cobro",) # add volumen when be needed
+    table_add_guia = ttk.Treeview(frame_add_remesa,columns=list_camps, show="headings", height=10)
+    table_add_guia.grid(row=3, column=0, columnspan=10, sticky="wes", padx=(10,20), pady=10,)
 
     # Create a vertical scrollbar
-    scrollbar = ttk.Scrollbar(frame_add_remesa, orient="vertical", command=table.yview)
+    scrollbar = ttk.Scrollbar(frame_add_remesa, orient="vertical", command=table_add_guia.yview)
     scrollbar.grid(row=3, column=8, sticky="wns", pady=20,) 
-    table.configure(yscrollcommand=scrollbar.set)
+    table_add_guia.configure(yscrollcommand=scrollbar.set)
 
-    table.column("#0", width=0, stretch=False, anchor="center")
-    table.column("numero_guia", width=120, stretch=False, anchor="center")
-    table.column("unidades", width=60, stretch=False, anchor="center")
-    table.column("peso_Kg", width=50, stretch=False, anchor="center")
-    # table.column("volumen_m3", width=50, stretch=False, anchor="center")
-    table.column("destino", width=100, stretch=False, anchor="center")
-    table.column("fecha_de_asignacion", width=100, stretch=False, anchor="center")
-    table.column("valor", width=100, stretch=False, anchor="center")
-    table.column("cliente", width=300, stretch=False, anchor="center")
-    table.column("balance_cobro", width=100, stretch=False, anchor="center")
+    # table_add_guia.column("#0", width=0, stretch=False, anchor="center")
+    table_add_guia.column("numero_guia", width=120, stretch=False, anchor="center")
+    table_add_guia.column("unidades", width=60, stretch=False, anchor="center")
+    table_add_guia.column("peso_Kg", width=50, stretch=False, anchor="center")
+    table_add_guia.column("volumen_m3", width=50, stretch=False, anchor="center")
+    table_add_guia.column("destino", width=180, stretch=False, anchor="center")
+    table_add_guia.column("fecha_de_asignacion", width=100, stretch=False, anchor="center")
+    table_add_guia.column("cliente", width=300, stretch=False, anchor="center")
+    table_add_guia.column("valor", width=100, stretch=False, anchor="center")
+    table_add_guia.column("balance_cobro", width=100, stretch=False, anchor="center")
     
     # Configurar encabezados de columna
-    table.heading("numero_guia", text="Guia")
-    table.heading("unidades", text="Uds")
-    table.heading("peso_Kg", text="Kg")
-    # table.heading("volumen_m3", text="Vol(M3)")
-    table.heading("destino", text="Destino")
-    table.heading("fecha_de_asignacion", text="F.Asignacion")
-    table.heading("valor", text="Valor")
-    table.heading("cliente", text="Cliente")
-    table.heading("balance_cobro", text="Bal. de Cobro")
+    table_add_guia.heading("numero_guia", text="Guia")
+    table_add_guia.heading("unidades", text="Uds")
+    table_add_guia.heading("peso_Kg", text="Kg")
+    table_add_guia.heading("volumen_m3", text="Vol(M3)")
+    table_add_guia.heading("destino", text="Destino")
+    table_add_guia.heading("fecha_de_asignacion", text="F.Asignacion")
+    table_add_guia.heading("cliente", text="Cliente")
+    table_add_guia.heading("valor", text="Valor")
+    table_add_guia.heading("balance_cobro", text="Bal. de Cobro")
 
 
     #   #*  FRAME GUIAS!!!!
@@ -581,7 +595,7 @@ def show_remesas(frame):
     ttk.Label(frame_guia, text="Guia:").grid(row=0, column=0, padx=10,)
     entry_guia = ttk.Entry(frame_guia, width=15, justify="center")
     entry_guia.grid(row=1, column=0,)
-    ttk.Button(frame_guia, text="🔤", command= lambda: get_info_guia(entry_guia.get()), width=4).grid(row=1, column=1, ipady=1, sticky='w',)
+    ttk.Button(frame_guia, text="🔤", command= lambda: get_info_guia(entry_guia.get().strip()), width=4).grid(row=1, column=1, ipady=1, sticky='w',)
 
     ttk.Label(frame_guia, text="Uds:").grid(row=0, column=2, padx=5,)
     entry_unidades = ttk.Entry(frame_guia, width=8, justify="center")
@@ -615,7 +629,7 @@ def show_remesas(frame):
     entry_balance_cobro = ttk.Entry(frame_guia, width=10, justify="center")
     entry_balance_cobro.grid(row=1, column=9, padx=5,)
 
-    ttk.Button(frame_guia, text="✅", width=4, command= lambda: add_guia_to_remesa(entry_guia.get())).grid(row=1, column=10, padx=5, pady=5, )    
+    ttk.Button(frame_guia, text="✅", width=4, command= lambda: add_guia_to_remesa()).grid(row=1, column=10, padx=5, pady=5, )    
     ttk.Button(frame_guia, text="❌", width=4, command= lambda: delete_row()).grid(row=1, column=11, padx=5, pady=5,)
     
     
@@ -632,7 +646,6 @@ def show_remesas(frame):
     #********************************************************* FRAME TAB SEARCH REMESA******************************************************** #
     #********************************************************* FRAME TAB SEARCH REMESA******************************************************** #
     #********************************************************* FRAME TAB SEARCH REMESA******************************************************** #
-    
     
     
     def on_double_click(event):
