@@ -250,11 +250,11 @@ def show_facturacion(frame):
         df_summary = pd.DataFrame(data_anexos, columns=columns_summary)
         df_final = pd.concat([df2, pd.DataFrame(columns=[' ']), df_summary], axis=1)
 
-        print(df_final)
+        # print(df_final)
         # df_final.iloc[:, [6, 15]] = df_final.iloc[:, [6,15]].astype(int)
         
-        df_final.to_excel(f'{id_factura}.xlsx', index=False, float_format="%.0f")
-        os.startfile(f'{id_factura}.xlsx')
+        df_final.to_excel(f'D:/intermodal/control/{id_factura}.xlsx', index=False, float_format="%.0f")
+        os.startfile(f'D:/intermodal/control/{id_factura}.xlsx')
 
 
     tab_facturacion = ttk.Notebook(frame)
