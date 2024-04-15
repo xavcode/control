@@ -8,22 +8,26 @@ import guias, remesas, anexos, destinos, facturacion, config
 # Crear la ventana principal
 window = tk.Tk()
 window.title("Control Guias y Facturacion Intermodal")
-window.geometry("1360x900")
+window.geometry("1360x800")
 window.resizable(False, False)
 
-main_frame = ttk.Frame(window, width=1360, height=900,)
-main_frame.grid(row=0, column=1, sticky="nswe",  )
+window.grid_columnconfigure(0, weight=1)
+window.grid_columnconfigure(1, weight=1)
+window.grid_columnconfigure(2, weight=1)
+
+
+main_frame = ttk.LabelFrame(window, width=1200, height=700)
+main_frame.grid(row=0, column=1, sticky="wens", padx=10, pady=10, )
+main_frame.grid_rowconfigure(0, weight=1)
+main_frame.grid_columnconfigure(0, weight=1)
 main_frame.grid_propagate(False)
 
-for i in range(10):
-    main_frame.grid_rowconfigure(i, weight=1)
-for i in range(10):
-    main_frame.grid_columnconfigure(i, weight=1)
-    
 def main_frame_show():
     for widget in main_frame.winfo_children():
         widget.destroy()
 
+   
+main_frame.grid(row=0, column=1, sticky="wens", padx=10, pady=10)
 image_path = "assets/intermodal_camion.png"
 image = tk.PhotoImage(file=image_path)
 label = ttk.Label(main_frame, image=image)
