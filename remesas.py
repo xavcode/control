@@ -157,7 +157,9 @@ def show_remesas(frame):
         entry_balance_cobro.delete(0, tk.END)    
         disable_entries_guia()            
     def get_info_guia(id_guia):
-
+        if not id_guia:
+            messagebox.showerror("", "Ingrese un número de guía")
+            return
         try:         
             connection = sqlite3.connect(config.db_path)
             query = f"SELECT guias.numero_guia, guias.unidades, guias.peso_Kg, guias.volumen_m3, guias.destino, guias.fecha_de_asignacion, guias.destinatario, destinos.valor_destino_1,  (guias.balance_RCE + guias.balance_FCE) AS balance_cobro  FROM guias JOIN destinos ON destinos.destino = guias.destino WHERE guias.numero_guia = '{id_guia}';"
@@ -187,6 +189,9 @@ def show_remesas(frame):
         disable_entries_guia()    
     def add_guia_to_remesa():
         try: 
+            if not entry_valor.get():
+                messagebox.showerror("", "El valor no puede estar vacío")
+                return
             #Verify if the guia is already added
             entry_guia_value = entry_guia.get().strip()
             for item in table_add_guia.get_children():
@@ -248,10 +253,15 @@ def show_remesas(frame):
         calc_utilidad()
         calc_rentabilidad()
     def save_remesa():
-        
-        
+                
         id_remesa = entry_id_remesa.get()
+        if not id_remesa:
+            messagebox.showerror("", "Ingrese un número de remesa")
+            return
         id_manifiesto = entry_manifiesto.get()
+        if not id_manifiesto:
+            messagebox.showerror("", "Ingrese un número de manifiesto")
+            return
         conductor = entry_conductor.get()
         fecha_remesa = entry_fecha.get()
         total_uds = entry_total_uds.get()
@@ -560,6 +570,16 @@ def show_remesas(frame):
             # list_remesas()
             get_remesa(df)
     def export_remesa():
+        if not entry_id_remesa.get():
+            messagebox.showerror("", "Ingrese un número de remesa")
+            return
+        if not entry_manifiesto.get():
+            messagebox.showerror("", "Ingrese un número de manifiesto")
+            return
+        
+        if not table_add_guia.get_children():
+            messagebox.showerror("", "No se han agregado guias a la remesa")
+            return
         
         file_location = "D:/intermodal/control/remesas"
         file_name = f"{entry_id_remesa.get()}.xlsx"
