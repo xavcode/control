@@ -25,7 +25,6 @@ main_frame.grid_propagate(False)
 def main_frame_show():
     for widget in main_frame.winfo_children():
         widget.destroy()
-
    
 main_frame.grid(row=0, column=1, sticky="wens", padx=10, pady=10)
 image_path = "assets/intermodal_camion.png"

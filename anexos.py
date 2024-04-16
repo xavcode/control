@@ -382,7 +382,21 @@ def show_anexos(frame):
         
         #get the disctint remesas and the sum of values and total guias in the anexo of each remesa
         try:
-            query_summary_anexo= f"SELECT COALESCE(remesa_id, 'SIN REMESA'), COUNT (DISTINCT guias.numero_guia), SUM(valor) AS suma_valores FROM guias LEFT JOIN remesas_guias ON guias.numero_guia = remesas_guias.guia_id LEFT JOIN anexos_guias ON guias.numero_guia = anexos_guias.guia_id WHERE anexo_id = '{id_anexo}' GROUP BY remesa_id;"
+            query_summary_anexo= f'''
+            SELECT 
+                COALESCE(remesas_guias.remesa_id, 'SIN REMESA'), 
+                COUNT(DISTINCT guias.numero_guia), 
+                SUM(anexos_guias.valor) AS suma_valores 
+            FROM 
+                guias 
+                LEFT JOIN remesas_guias ON guias.numero_guia = remesas_guias.guia_id 
+                LEFT JOIN anexos_guias ON guias.numero_guia = anexos_guias.guia_id 
+            WHERE 
+                anexos_guias.anexo_id = '{id_anexo}' 
+            GROUP BY 
+                remesas_guias.remesa_id;
+
+            '''
             resultado = connection.execute(query_summary_anexo).fetchall()
             for row in resultado:
                 tree_anexo_summary.insert("", "end", values=row)
