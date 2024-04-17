@@ -86,7 +86,7 @@ def show_remesas(frame):
             unidades = int(table_add_guia.item(item, "values")[1])
             kilos = int(table_add_guia.item(item, "values")[2])
             volumen = int(table_add_guia.item(item, "values")[3])
-            valor = int(table_add_guia.item(item, "values")[7])
+            valor = int(table_add_guia.item(item, "values")[6])
             cobro =int(table_add_guia.item(item, "values")[8])
             gasto_operativo = int(entry_gasto_operativo.get())
             if gasto_operativo == 0 or not gasto_operativo:
@@ -203,12 +203,12 @@ def show_remesas(frame):
             data = [
                 entry_guia_value,
                 int(entry_unidades.get()),
-                int(entry_peso.get()),
                 int(entry_volumen.get()),
+                int(entry_peso.get()),
                 entry_destino.get().strip(),
                 entry_fecha_asignacion.get().strip(),
-                entry_cliente.get().strip(),
                 int(entry_valor.get()),
+                entry_cliente.get().strip(),
                 int(entry_balance_cobro.get())
             ]        
             clean_fields_guia()
@@ -220,6 +220,8 @@ def show_remesas(frame):
             entry_guia.focus_set()            
         except Exception as e:
             messagebox.showerror("", f"Error al agregar la guia: {str(e)}")       
+    
+    
     def delete_row():
         selected_item = table_add_guia.selection()
         if selected_item:
@@ -703,8 +705,8 @@ def show_remesas(frame):
                 entry_gasto_operativo.insert(0, row[11]) if row[11] != "" else entry_gasto_operativo.insert(0, "0")
                 entry_utilidad.insert(0, row[12]) if row[12] != "" else entry_utilidad.insert(0, "0")
                 entry_rentabilidad.insert(0, row[13]) if row[13] != "" else entry_rentabilidad.insert(0, "0")
-                disable_entries()
                 cbbx_destino_remesa.set(row[3])                
+                disable_entries()
         except Exception as e:
             messagebox.showerror("", f"Error al buscar la remesa: {str(e)}")    
         
@@ -805,7 +807,7 @@ def show_remesas(frame):
             #create the query for the update 
             cursor.execute("DELETE FROM remesas_guias WHERE remesa_id = ?", (id_remesa,))
             for guia in rows_to_update:
-                cursor.execute(f"INSERT INTO remesas_guias (remesa_id, guia_id, valor) VALUES ('{id_remesa}', '{guia[0]}', {guia[7]}) ")
+                cursor.execute(f"INSERT INTO remesas_guias (remesa_id, guia_id, valor) VALUES ('{id_remesa}', '{guia[0]}', {guia[6]}) ")
             connection.commit()
             connection.close()
             # clean_entries_remesa()
@@ -814,7 +816,6 @@ def show_remesas(frame):
             list_remesas()
             search_remesas_edit(id_remesa)
             
-          
         except Exception as e:
             messagebox.showerror("", f"Error al actualizar las guias: {str(e)}")        
             
