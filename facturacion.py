@@ -291,8 +291,9 @@ def show_facturacion(frame):
                 
                 num_rows_summary = len(df_anexos)
                 cell_range_summary = f'I3:K{num_rows_summary+3}'
-                worksheet.conditional_format(cell_range_summary, {'type': 'no_blanks', 'format': writer.book.add_format({'border': 1,'align':'center' })}) #type: ignore               
-                worksheet.set_column('K:K', 12, writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0'})) #type: ignore
+                worksheet.conditional_format(cell_range_summary, {'type': 'no_blanks', 'format': writer.book.add_format({'border': 1,})}) #type: ignore               
+                worksheet.set_column('I:K', 13, writer.book.add_format({'align': 'center'})) #type: ignore
+                worksheet.set_column('K:K', 14, writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0'})) #type: ignore
                 
         os.startfile(file_path)
 
