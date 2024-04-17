@@ -226,6 +226,7 @@ def show_remesas(frame):
         selected_item = table_add_guia.selection()
         if selected_item:
             table_add_guia.delete(*selected_item)  # Convert the tuple to a string using the * operator 
+            calc_total()
     def calc_utilidad():        
         total_ingreso = int(entry_ingreso_operativo_total.get())
         total_gasto = int(entry_gasto_operativo.get())
