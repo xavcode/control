@@ -355,7 +355,7 @@ def show_anexos(frame):
         connection = sqlite3.connect(config.db_path)
         #get the remesas and details of the anexo
         try:            
-            query_show_detail = f'''SELECT 
+            query_show_detail = f'''SELECT DISTINCT
                                         anexos_guias.guia_id, 
                                         COALESCE(remesas_guias.remesa_id, 'SIN REMESA') AS remesa_id, 
                                         COALESCE(guias.destino, 'SIN GUIA') AS destino, 
@@ -401,8 +401,6 @@ def show_anexos(frame):
             for row in resultado:
                 tree_anexo_summary.insert("", "end", values=row)
 
-            
-        
         except Exception as e:
             messagebox.showerror("", f"Error al obtener datos del anexo: {str(e)}")
             
@@ -424,7 +422,6 @@ def show_anexos(frame):
     # Create the search frame
     frame_search = ttk.Frame(frame_search_anexos)
     frame_search.grid(row=0, column=0, padx=10, pady=10, sticky="e")
-    
     
     # Create the detail treeview
     tree_search = ttk.Treeview(frame_search, height=20, show="headings", selectmode="browse")
