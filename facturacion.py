@@ -5,6 +5,7 @@ import tkinter as tk
 import PyPDF2
 import re
 import sqlite3
+from pandas import ExcelWriter
 
 from tkinter import *
 from tkinter import ttk, filedialog, messagebox
@@ -13,6 +14,9 @@ from tkcalendar import DateEntry
 import config
 import pandas as pd
 import os
+import pandas as pd
+import os
+import xlsxwriter
 
 def _convert_stringval(value):
     if hasattr(value, 'typename'):
@@ -64,13 +68,13 @@ def show_facturacion(frame):
         
         connection = sqlite3.connect(config.db_path)
         try:            
-            query_show_detail = f'''SELECT 
+            query_show_detail = f'''SELECT DISTINCT
                                         COALESCE(remesas_guias.remesa_id, 'SIN REMESA') AS remesa_id, 
                                         COALESCE(anexos_guias.guia_id,  'SIN GUIA')AS guia_id,                                        
                                         COALESCE(anexos_guias.anexo_id, 'SIN ANEXO') AS anexo_id,
                                         COALESCE(guias.destino, 'SIN GUIA') AS destino, 
-                                        COALESCE(guias.unidades, 'N/A') AS unidades, 
-                                        COALESCE(guias.peso_Kg, 'N/A') AS peso_Kg, 
+                                        COALESCE(guias.unidades, '0') AS unidades, 
+                                        COALESCE(guias.peso_Kg, '0') AS peso_Kg, 
                                         COALESCE(anexos_guias.valor, 'SIN GUIA') AS valor 
                                     FROM 
                                         anexos_guias 
@@ -225,37 +229,72 @@ def show_facturacion(frame):
         
         id_factura = entry_id_factura.get()
         cliente = entry_cliente.get()
-       
-        # Get the data from the treeview
-        data = []        
-        for item in treeview_guias.get_children():
-            values = treeview_guias.item(item, 'values')
-            data.append(values)
+        fecha_factura = date_entry_fecha.get_date() 
         
-        # Create a DataFrame from the data
-        df = pd.DataFrame(data, columns=camps_factura)
-        df.drop(columns=['Num'], inplace=True)
+        file_location = "D:/intermodal/control/facturas"
+        file_name = f"{entry_id_factura.get()}.xlsx"
+        file_path = filedialog.asksaveasfilename(initialdir=file_location, initialfile=file_name, filetypes=[("Excel Files", "*.xlsx")])
         
-        new_row = pd.DataFrame({'Factura': id_factura  , 'Cliente': cliente, 'Fecha': date_entry_fecha.get(), 'Total': entry_total_factura.get()}, index=[0])
         
-        df2 = pd.concat([df, new_row]).reset_index(drop=True)
-        df2 = pd.concat([df, pd.DataFrame(columns=[' ']), new_row], axis=1)
-        
-        # Create a summary DataFrame
-        data_anexos = []
-        for item in treeview_summary_anexos.get_children():
-            values = treeview_summary_anexos.item(item, 'values')
-            data_anexos.append(values)
-        
-        df_summary = pd.DataFrame(data_anexos, columns=columns_summary)
-        df_final = pd.concat([df2, pd.DataFrame(columns=[' ']), df_summary], axis=1)
-
-        # print(df_final)
-        # df_final.iloc[:, [6, 15]] = df_final.iloc[:, [6,15]].astype(int)
-        
-        df_final.to_excel(f'D:/intermodal/control/{id_factura}.xlsx', index=False, float_format="%.0f")
-        os.startfile(f'D:/intermodal/control/{id_factura}.xlsx')
-
+        if file_path:        
+            data_anexos = []        
+            # Get the data from the treeview
+            
+            for item in treeview_guias.get_children():
+                values = list(treeview_guias.item(item, 'values'))  # Convert tuple to list
+                
+                values[5] = int(values[5]) #type: ignore
+                values[6] = int(values[6]) #type: ignore
+                values[7] = int(values[7]) #type: ignore
+                data_anexos.append(values)
+            
+            # Create a DataFrame from the data
+            df = pd.DataFrame(data_anexos, columns=['Num','Remesa', 'Guia', 'Anexo', 'Destino', 'Cant', 'Peso', 'Valor'])
+            df.drop(columns=['Num'], inplace=True)
+            
+            with ExcelWriter(file_path, engine='xlsxwriter') as writer:
+                df.to_excel(writer, sheet_name='Hoja1', index=False, startrow=2)
+                
+                #Access the XlsxWriter workbook and worksheet objects from the dataframe.
+                
+                worksheet = writer.sheets['Hoja1']
+                worksheet.merge_range('A1:G1', f'LIQUIDACION REEXPEDICIONES COORDINADORA S.A.', writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center', 'border':1 })) #type: ignore
+                
+                worksheet.merge_range('A2:D2', f'RELACION DE GUIAS / R.T.P FACTURADAS ', writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center', 'border':1})) #type: ignore
+                worksheet.merge_range('E2:G2', f'FACTURA No. {id_factura} - {fecha_factura}' , writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center','border':1})) #type: ignore
+                
+                worksheet.set_column('A:G', 12, writer.book.add_format({'align': 'center'})) #type: ignore
+                worksheet.set_column('D:D', 25, writer.book.add_format({'align': 'center'})) #type: ignore
+                worksheet.set_column('G:G', 10, writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0'})) #type: ignore
+                
+                total_valor = df['Valor'].sum()
+                worksheet.write(len(df) + 3, 5, 'TOTAL', writer.book.add_format({'bold': True, 'align': 'center', 'border':1})) #type: ignore
+                worksheet.write(len(df) + 3, 6, total_valor, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '"$"#,##0'})) #type: ignore
+                
+                # Set the border for the cells with data
+                num_rows_anexo = len(df)                
+                cell_range_anexo = f'A3:H{num_rows_anexo+3}'
+                worksheet.conditional_format(cell_range_anexo, {'type': 'no_blanks', 'format': writer.book.add_format({'border': 1})}) #type: ignore
+             
+        #  Create a summary DataFrame
+                data_summary_anexos = []
+                for item in treeview_summary_anexos.get_children():
+                    values = list(treeview_summary_anexos.item(item, 'values'))  # Convert tuple to list
+                    values[1] = int(values[1]) #type:ignore
+                    values[2] = int(values[2]) #type:ignore                                        
+                    data_summary_anexos.append(values)                    
+                
+                df_anexos = pd.DataFrame(data_summary_anexos, columns=columns_summary)
+                df_anexos.to_excel(writer, sheet_name='Hoja1', index=False, startrow=2, startcol=8)
+                
+                worksheet.merge_range('I2:K2', f'RESUMEN DE ANEXOS', writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center', 'border':1})) #type: ignore
+                
+                num_rows_summary = len(df_anexos)
+                cell_range_summary = f'I3:K{num_rows_summary+3}'
+                worksheet.conditional_format(cell_range_summary, {'type': 'no_blanks', 'format': writer.book.add_format({'border': 1,'align':'center' })}) #type: ignore               
+                worksheet.set_column('K:K', 12, writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0'})) #type: ignore
+                
+        os.startfile(file_path)
 
     tab_facturacion = ttk.Notebook(frame)
     tab_facturacion.grid(row=0, column=0, sticky='nsew', padx=10, pady=10)
