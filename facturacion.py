@@ -28,9 +28,7 @@ def _convert_stringval(value):
     return value
 ttk._convert_stringval = _convert_stringval # type: ignore
 
-
 num =1
-
 def show_facturacion(frame):
     for widget in frame.winfo_children():
         widget.grid_forget()
@@ -58,7 +56,7 @@ def show_facturacion(frame):
     
     def get_anexos():
         global num
-        id_anexo = entry_agregar_anexo.get()
+        id_anexo = entry_agregar_anexo.get().strip()
         
         if not id_anexo:
             messagebox.showerror("", "Por favor ingrese un anexo")
@@ -92,7 +90,7 @@ def show_facturacion(frame):
             result = connection.execute(query_show_detail).fetchall()
             if not result:
                 raise Exception(id_anexo)
-            query_summary_anexo = f'''SELECT DISTINCT facturas_guias.factura_id 
+            query_summary_anexo = f'''  SELECT DISTINCT facturas_guias.factura_id 
                                         FROM facturas_guias
                                         JOIN anexos_guias ON facturas_guias.guia_id = anexos_guias.guia_id
                                         WHERE anexos_guias.anexo_id = '{id_anexo}';            
@@ -101,14 +99,8 @@ def show_facturacion(frame):
             
             if result_summary:
                 messagebox.showwarning("", f"El anexo {id_anexo} ya ha sido agregado a la factura {result_summary[0][0]}")
-                return
-                    
-            for row in result:
-                guia_id = row[1]
-                if any(guia_id == treeview_guias.item(item)['values'][2] for item in treeview_guias.get_children()):
-                    messagebox.showwarning("", f"La guia {guia_id} ya ha sido agregada")
-                    return
-                       
+                return            
+            
             for row in result:
                 treeview_guias.insert("", "end", values=[num] + list(row))
                 num += 1
@@ -124,7 +116,7 @@ def show_facturacion(frame):
             messagebox.showerror("", f"No se encontro el anexo: {str(e)}")
 
     def delete_anexo(anexo_id):
-        # anexo_id = entry_borrar_anexo.get()
+        # anexo_id = entry_borrar_anexo.get().strip()
         selected_item = treeview_guias.focus()
         if selected_item:
             selected_value = treeview_guias.item(selected_item)['values'][0]
@@ -198,7 +190,7 @@ def show_facturacion(frame):
         return [row[0] for row in result]
     
     def save_factura():
-        id_factura = entry_id_factura.get()
+        id_factura = entry_id_factura.get().strip().upper()
         if not entry_id_factura.get():
             messagebox.showerror("", "Por favor ingrese el numero de factura")
             return
@@ -483,7 +475,7 @@ def show_facturacion(frame):
     entry_borrar_anexo = ttk.Entry(frame_date_factura)
     entry_borrar_anexo.grid(row=4, column=1, columnspan=2, padx=5, pady=5, sticky='we')
     
-    btn_borrar_anexo = ttk.Button(frame_date_factura, text='Borrar Anexo', command= lambda: delete_anexo(entry_borrar_anexo.get()))
+    btn_borrar_anexo = ttk.Button(frame_date_factura, text='Borrar Anexo', command= lambda: delete_anexo(entry_borrar_anexo.get().strip()))
     btn_borrar_anexo.grid(row=4, column=3, padx=5, pady=5, sticky='we')
     
     camps_factura = ['Num','Remesa', 'Guia', 'Anexo', 'Destino', 'Unidades', 'Peso Kg', 'Valor']
@@ -527,6 +519,8 @@ def show_facturacion(frame):
     treeview_summary_anexos.heading('Guias', text='Guias')
     treeview_summary_anexos.heading('Valor', text='Valor')
     
+    treeview_summary_anexos.bind('<Delete>', lambda event: delete_anexo(treeview_summary_anexos.item(treeview_summary_anexos.focus(), 'values')[0])) # type: ignore
+    
     vscrollbar_summary_anexos = ttk.Scrollbar(frame_date_factura, orient="vertical", command=treeview_summary_anexos.yview)
     vscrollbar_summary_anexos.grid(row=1, column=12,  rowspan=4, sticky='ns')
     treeview_summary_anexos.configure(yscrollcommand=vscrollbar_summary_anexos.set)
@@ -540,7 +534,7 @@ def show_facturacion(frame):
     entry_search_single_factura = ttk.Entry(frame_search_single_factura, width=15)
     entry_search_single_factura.grid(row=0, column=0, padx=5, pady=5, sticky='w')
     
-    btn_search_single_factura = ttk.Button(frame_search_single_factura, text='Buscar Factura', command= lambda: search_edit_factura(entry_search_single_factura.get()))
+    btn_search_single_factura = ttk.Button(frame_search_single_factura, text='Buscar Factura', command= lambda: search_edit_factura(entry_search_single_factura.get().strip()))
     btn_search_single_factura.grid(row=0, column=1, padx=5, pady=5, sticky='w')
     
     btn_update_factura = ttk.Button(frame_search_single_factura, text='Actualizar Factura', command= lambda: update_factura(entry_search_single_factura.get()))
