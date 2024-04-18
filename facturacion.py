@@ -36,11 +36,13 @@ def show_facturacion(frame):
         widget.grid_forget()
     
     anexos_list_summary = {}
-    def show_context_menu(event):
-        item = treeview_facturas.focus()
-        if item:
-            context_menu.post(event.x_root, event.y_root)
-    
+    def clean_entries_factura():
+        entry_id_factura.delete(0, 'end')
+        entry_cliente.delete(0, 'end')
+        entry_agregar_guia.delete(0, 'end')
+        entry_agregar_anexo.delete(0, 'end')
+        entry_borrar_anexo.delete(0, 'end')
+        entry_total_factura.delete(0, 'end')
     
     def clean_treeview_summary_anexos():
         for item in treeview_summary_anexos.get_children():
@@ -100,7 +102,13 @@ def show_facturacion(frame):
             if result_summary:
                 messagebox.showwarning("", f"El anexo {id_anexo} ya ha sido agregado a la factura {result_summary[0][0]}")
                 return
-            
+                    
+            for row in result:
+                guia_id = row[1]
+                if any(guia_id == treeview_guias.item(item)['values'][2] for item in treeview_guias.get_children()):
+                    messagebox.showwarning("", f"La guia {guia_id} ya ha sido agregada")
+                    return
+                       
             for row in result:
                 treeview_guias.insert("", "end", values=[num] + list(row))
                 num += 1
@@ -151,7 +159,9 @@ def show_facturacion(frame):
     def clean_treeview_facturas():
         for item in treeview_facturas.get_children():
             treeview_facturas.delete(item)
-            
+        entry_delete_factura.delete(0, 'end')
+        entry_search_factura.delete(0, 'end')
+       
     def clean_treeview_guias():
         for item in treeview_guias.get_children():
             treeview_guias.delete(item)
@@ -162,17 +172,6 @@ def show_facturacion(frame):
         entry_agregar_guia.delete(0, 'end')
         entry_agregar_anexo.delete(0, 'end')
         anexos_list_summary.clear()
-    
-    def validations_factura():
-        if not entry_id_factura.get():
-            messagebox.showerror("", "Por favor ingrese el numero de factura")
-            return
-        if not date_entry_fecha.get_date():
-            messagebox.showerror("", "Por favor ingrese la fecha de la factura")
-            return
-        if not treeview_guias.get_children():
-            messagebox.showerror("", "Por favor agregue guias a la factura")
-            return
     
     def on_double_click_delete_anexo(event):
         selected_item = treeview_summary_anexos.focus()
@@ -199,42 +198,68 @@ def show_facturacion(frame):
         return [row[0] for row in result]
     
     def save_factura():
-        validations_factura()
-        
+        id_factura = entry_id_factura.get()
+        if not entry_id_factura.get():
+            messagebox.showerror("", "Por favor ingrese el numero de factura")
+            return
+        fecha_factura = date_entry_factura.get()
+   
         connection = sqlite3.connect(config.db_path)
         try:
-            query_insert_factura = f'''INSERT INTO facturas (id_factura, fecha_factura, cliente_factura, valor_factura) VALUES ('{entry_id_factura.get()}', '{date_entry_fecha.get_date()}', '{entry_cliente.get()}', {entry_total_factura.get()});'''
-            connection.execute(query_insert_factura)            
-            values_list = []
-            for item in treeview_guias.get_children():
-                values = treeview_guias.item(item, 'values')
-                values_list.append(f"('{entry_id_factura.get()}', '{values[1]}', '{values[2]}', '{values[3]}', '{values[4]}', '{values[5]}', '{values[6]}', {int(values[7])})")
-            if values_list:
-                values_str = ', '.join(values_list)
-                query_insert_detalle_factura = f'''INSERT INTO facturas_guias (factura_id, remesa_id, guia_id, anexo_id, destino, unidades, peso_Kg, valor) VALUES {values_str};'''
-                connection.execute(query_insert_detalle_factura)
-                connection.commit()
-
-            messagebox.showinfo("", "Factura guardada correctamente")
-            
-            get_facturas()
+            query_insert_factura = f'''
+                                    INSERT INTO facturas (
+                                        id_factura, 
+                                        fecha_factura, 
+                                        cliente_factura, 
+                                        valor_factura) 
+                                        VALUES (
+                                        '{id_factura}', 
+                                        '{fecha_factura}', 
+                                        '{entry_cliente.get()}', 
+                                         {int(entry_total_factura.get().replace(',', ''))});
+                                    ''' 
+            connection.execute(query_insert_factura)
         except Exception as e:
             messagebox.showerror("", f"Error al guardar la factura: {str(e)}")
-        connection.close()
+            return            
+        try:
+            values_list = []
+            
+            for item in treeview_guias.get_children():
+                values = treeview_guias.item(item, 'values')
+                values_list.append(values)
+            
 
+            cursor = connection.cursor()
+            for value in values_list:
+                cursor.execute(f"INSERT OR IGNORE INTO facturas_guias (factura_id, remesa_id, guia_id, anexo_id, destino, unidades, peso_Kg, valor) VALUES ('{entry_id_factura.get()}', '{value[1]}', '{value[2]}', '{value[3]}', '{value[4]}', {value[5]}, {value[6]}, {value[7]})") 
+            connection.commit()            
+
+            messagebox.showinfo("", "Factura guardada correctamente")
+            clean_treeview_facturas()
+            get_facturas()
+        
+            file = exportar_factura_excel()
+            if file:
+                # Check if the file  exists
+                os.startfile(file)
+        except Exception as e:
+            messagebox.showerror("", f"Error al guardar las guias en la factura: {str(e)}")
+        connection.close()
+             
     def exportar_factura_excel():
+        
         if not entry_id_factura.get():
             messagebox.showerror("", "Por favor ingrese el numero de factura")
             return
         
         id_factura = entry_id_factura.get()
         cliente = entry_cliente.get()
-        fecha_factura = date_entry_fecha.get_date() 
+        fecha_factura = date_entry_factura.get_date() 
         
         file_location = "D:/intermodal/control/facturas"
         file_name = f"{entry_id_factura.get()}.xlsx"
-        file_path = filedialog.asksaveasfilename(initialdir=file_location, initialfile=file_name, filetypes=[("Excel Files", "*.xlsx")])
-        
+        file_path = os.path.join(file_location, file_name)
         
         if file_path:        
             data_anexos = []        
@@ -260,7 +285,7 @@ def show_facturacion(frame):
                 worksheet = writer.sheets['Hoja1']
                 worksheet.merge_range('A1:G1', f'LIQUIDACION REEXPEDICIONES COORDINADORA S.A.', writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center', 'border':1 })) #type: ignore
                 
-                worksheet.merge_range('A2:D2', f'RELACION DE GUIAS / R.T.P FACTURADAS ', writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center', 'border':1})) #type: ignore
+                worksheet.merge_range('A2:D2', f'RELACION DE GUIAS  R.T.P FACTURADAS ', writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center', 'border':1})) #type: ignore  
                 worksheet.merge_range('E2:G2', f'FACTURA No. {id_factura} - {fecha_factura}' , writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center','border':1})) #type: ignore
                 
                 worksheet.set_column('A:G', 12, writer.book.add_format({'align': 'center'})) #type: ignore
@@ -295,8 +320,117 @@ def show_facturacion(frame):
                 worksheet.set_column('I:K', 13, writer.book.add_format({'align': 'center'})) #type: ignore
                 worksheet.set_column('K:K', 14, writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0'})) #type: ignore
                 
-        os.startfile(file_path)
+        # os.startfile(file_path)
+        if os.path.exists(file_path):
+        # Generate a new file name with a number suffix
+            file_name, file_extension = os.path.splitext(file_path)
+            file_number = 1
+            new_file = f"{file_name}_{file_number}{file_extension}"
+            while os.path.exists(new_file):
+                file_number += 1
+                new_file = f"{file_name}_{file_number}{file_extension}"
+            file = new_file
+            os.rename(file_path, new_file)
+            os.startfile(file)
+        return file
 
+    def search_edit_factura(factura):
+        # clean_treeview_guias()
+        get_anexos_in_factura(factura)
+        if not factura:
+            messagebox.showerror("", "Por favor ingrese una factura")
+            return
+        
+        connection = sqlite3.connect(config.db_path)
+        try:
+            query_search_factura = f'''
+                                        SELECT
+                                        id_factura,
+                                        cliente_factura,
+                                        fecha_factura,
+                                        valor_factura                                    
+                                        FROM facturas 
+                                        WHERE id_factura = '{factura}';
+                                    '''
+            result = connection.execute(query_search_factura).fetchall()            
+            if not result:
+                raise Exception(factura)
+            
+            clean_entries_factura()
+            entry_id_factura.insert(0, result[0][0])
+            entry_cliente.insert(0, result[0][1])
+            date_entry_factura.set_date(result[0][2])
+            entry_total_factura.insert(0, "{:,}".format(result[0][3])) # type: ignore
+            
+            guias = get_facturas_detail(factura)
+            for row in guias:
+                treeview_guias.insert("", "end", values=[num] + list(row))
+            enumerate_rows(treeview_guias)
+
+        except Exception as e:
+            messagebox.showerror("", f"Error al buscar la remesa: {str(e)}")
+        
+        connection.close()
+    
+    def get_anexos_in_factura(factura):
+        connection = sqlite3.connect(config.db_path)
+        try:
+            query_get_anexos_from_factura = f'''
+                                    SELECT facturas_guias.anexo_id, COUNT(facturas_guias.anexo_id), SUM(facturas_guias.valor)   
+                                    FROM facturas_guias  
+                                    WHERE factura_id = '{factura}'    
+                                    GROUP BY anexo_id;                       
+                                '''
+            result = connection.execute(query_get_anexos_from_factura).fetchall()
+            connection.close()
+            treeview_summary_anexos.delete(*treeview_summary_anexos.get_children())
+            for row in result:
+                treeview_summary_anexos.insert('', 'end', values=(row))
+                
+            
+            return result
+        except Exception as e:
+            messagebox.showerror("", f"Error al obtener los anexos: {str(e)}")
+    
+    def update_factura(factura):
+        if not factura:
+            messagebox.showerror("", "Por favor ingrese una factura")
+            return
+        search_edit_factura(factura)
+        
+        
+        try:
+            connection = sqlite3.connect(config.db_path)
+            cursor = connection.cursor()
+            
+            query_update_factura = f'''
+                                    UPDATE facturas 
+                                    SET
+                                    id_factura = '{entry_id_factura.get()}',
+                                    cliente_factura = '{entry_cliente.get()}',
+                                    fecha_factura = '{date_entry_factura.get()}',
+                                    valor_factura = {int(entry_total_factura.get().replace(',', ''))}
+                                    WHERE id_factura = '{factura}';
+                                    '''
+            cursor.execute(query_update_factura)            
+            query_delete_facturas_guias = f'''DELETE FROM facturas_guias WHERE factura_id = '{factura}';'''
+            cursor.execute(query_delete_facturas_guias)
+            
+            rows_to_update = []
+            for item in treeview_guias.get_children():
+                values = list(treeview_guias.item(item, 'values'))
+                rows_to_update.append(values)
+                
+            for row in rows_to_update:
+                cursor.execute(f"INSERT INTO facturas_guias (factura_id, remesa_id, guia_id, anexo_id, destino, unidades, peso_Kg, valor) VALUES ('{entry_id_factura.get()}', '{row[1]}', '{row[2]}', '{row[3]}', '{row[4]}', {row[5]}, {row[6]}, {row[7]})")
+            connection.commit()
+            messagebox.showinfo("", "Remesa actualizada correctamente") 
+        except Exception as e:
+            messagebox.showerror("", f"Error al actualizar la remesa: {str(e)}")
+            
+        connection.close()    
+        
+        
     tab_facturacion = ttk.Notebook(frame)
     tab_facturacion.grid(row=0, column=0, sticky='nsew', padx=10, pady=10)
     tab_facturacion.grid_columnconfigure(0, weight=1)
@@ -317,6 +451,7 @@ def show_facturacion(frame):
     
     Label_Cliente = ttk.Label(frame_date_factura, text='Cliente:')
     Label_Cliente.grid(row=0, column=0, padx=5, pady=5, sticky='w')
+    
     entry_cliente = ttk.Combobox(frame_date_factura, values=["Coordinadora"])
     entry_cliente.current(0)
     entry_cliente.grid(row=0, column=1, padx=5, pady=5, columnspan=3, sticky='we')
@@ -327,8 +462,8 @@ def show_facturacion(frame):
     entry_id_factura.grid(row=1, column=1, padx=5,  pady=5,sticky='we' )
     
     lbl_fecha = ttk.Label(frame_date_factura, text='Fecha:').grid(row=1, column=2, padx=5, pady=5, sticky='e')    
-    date_entry_fecha = DateEntry(frame_date_factura, justify='center', date_pattern='dd/mm/yyyy' )
-    date_entry_fecha.grid(row=1, column=3, padx=5, pady=5, sticky='we',  )
+    date_entry_factura = DateEntry(frame_date_factura, foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy' )
+    date_entry_factura.grid(row=1, column=3, padx=5, pady=5, sticky='we',  )
     
     label_agregar_guia = ttk.Label(frame_date_factura, text='Agregar Guia:').grid(row=2, column=0, padx=5, pady=5, sticky='w', )
     entry_agregar_guia = ttk.Entry(frame_date_factura, state='disabled')
@@ -353,7 +488,7 @@ def show_facturacion(frame):
     
     camps_factura = ['Num','Remesa', 'Guia', 'Anexo', 'Destino', 'Unidades', 'Peso Kg', 'Valor']
     
-    treeview_guias = ttk.Treeview(frame_crear_factura, height=12, columns=camps_factura, selectmode='browse', show='headings' )
+    treeview_guias = ttk.Treeview(frame_crear_factura, height=15, columns=camps_factura, selectmode='browse', show='headings' )
     treeview_guias.grid(row=2, column=0, columnspan=6, padx=5, pady=5, sticky= 'nswe')
     vscrollbar = ttk.Scrollbar(frame_crear_factura, orient="vertical", command=treeview_guias.yview)
     vscrollbar.grid(row=2, column=8, sticky='ns')
@@ -398,6 +533,18 @@ def show_facturacion(frame):
     
     frame_totals = ttk.Frame(frame_crear_factura)
     frame_totals.grid(row=5, column=0, padx=5, pady=5, sticky='e')
+    
+    frame_search_single_factura = ttk.Frame(frame_crear_factura)
+    frame_search_single_factura.grid(row=5, column=0, padx=5, pady=5, sticky='w')
+    
+    entry_search_single_factura = ttk.Entry(frame_search_single_factura, width=15)
+    entry_search_single_factura.grid(row=0, column=0, padx=5, pady=5, sticky='w')
+    
+    btn_search_single_factura = ttk.Button(frame_search_single_factura, text='Buscar Factura', command= lambda: search_edit_factura(entry_search_single_factura.get()))
+    btn_search_single_factura.grid(row=0, column=1, padx=5, pady=5, sticky='w')
+    
+    btn_update_factura = ttk.Button(frame_search_single_factura, text='Actualizar Factura', command= lambda: update_factura(entry_search_single_factura.get()))
+    btn_update_factura.grid(row=0, column=2, padx=5, pady=5, sticky='w')
     
     label_total_factura = ttk.Label(frame_totals, text='Total Factura:').grid(row=5, column=0, padx=5, pady=5, sticky='w')
     entry_total_factura = ttk.Entry(frame_totals)
@@ -455,6 +602,9 @@ def show_facturacion(frame):
                     query_delete_facturas_guias = f'''DELETE FROM facturas_guias WHERE factura_id = '{factura_id}';'''
                     connection.execute(query_delete_facturas_guias)
                     connection.commit()
+                    entry_search_factura.delete(0, 'end')
+                    entry_delete_factura.delete(0, 'end')
+                    treeview_facturas_detail.delete(*treeview_facturas_detail.get_children())
                     messagebox.showinfo("", "Factura eliminada correctamente")
                 except Exception as e:
                     messagebox.showerror("", f"Error al eliminar la factura: {str(e)}")        
@@ -463,7 +613,6 @@ def show_facturacion(frame):
             messagebox.showerror("", f"La factura {factura_id} no existe")
         
         
-        entry_search_factura.delete(0, 'end')
     
     def get_facturas_detail(factura_id):
         for item in treeview_facturas_detail.get_children():
@@ -472,9 +621,16 @@ def show_facturacion(frame):
         connection = sqlite3.connect(config.db_path)
         try:
             query_get_facturas_detail = f'''
-            SELECT remesa_id, guia_id, anexo_id, destino, unidades, peso_Kg, valor FROM facturas_guias WHERE factura_id = '{factura_id}'
-            ORDER BY remesa_id DESC;
-            '''
+                    SELECT remesa_id, 
+                    guia_id, 
+                    anexo_id, 
+                    destino, 
+                    unidades, 
+                    peso_Kg, 
+                    valor 
+                    FROM facturas_guias WHERE factura_id = '{factura_id}'
+                    ORDER BY remesa_id ASC;
+                    '''
             result = connection.execute(query_get_facturas_detail).fetchall()
             if not result:
                 raise Exception(factura_id)
@@ -483,7 +639,8 @@ def show_facturacion(frame):
         except Exception as e:
             messagebox.showinfo("", f"No se encuentra la factura: {str(e)}")
         connection.close()
-        
+        return result
+    
     #**** Facturas****
     #**** Facturas****
     
@@ -508,7 +665,7 @@ def show_facturacion(frame):
     btn_delete_factura.grid(row=1, column=2, padx=5, pady=5, sticky='we')
     
     columns_facturas = ['Factura', 'Cliente', 'Fecha', 'Valor']    
-    treeview_facturas = ttk.Treeview(frame_get_facturas, height=12, columns=columns_facturas, selectmode='browse', show='headings' )
+    treeview_facturas = ttk.Treeview(frame_get_facturas, height=21, columns=columns_facturas, selectmode='browse', show='headings' )
     treeview_facturas.grid(row=5, column=0, columnspan= 6, padx=5, pady=5, sticky= 'nswe')
     treeview_facturas.column('Factura', width=100, anchor='center')
     treeview_facturas.column('Cliente', width=100, anchor='center')
@@ -539,7 +696,7 @@ def show_facturacion(frame):
     frame_facturas_detail.grid(row=0, column=1, padx=5, pady=5, sticky='nse')
     
     columns_facturas_detail = ['Remesa', 'Guia', 'Anexo', 'Destino', 'Unidades', 'Peso Kg', 'Valor']
-    treeview_facturas_detail = ttk.Treeview(frame_facturas_detail, height=15, columns=columns_facturas_detail, selectmode='browse', show='headings' )
+    treeview_facturas_detail = ttk.Treeview(frame_facturas_detail, height=25, columns=columns_facturas_detail, selectmode='browse', show='headings' )
     treeview_facturas_detail.grid(row=1, column=0, columnspan=6, padx=5, pady=5, sticky= 'nswe')
     
     treeview_facturas_detail.column('Remesa', width=80, anchor='center', stretch=False)
@@ -549,7 +706,6 @@ def show_facturacion(frame):
     treeview_facturas_detail.column('Unidades', width=80, anchor='center', stretch=False)
     treeview_facturas_detail.column('Peso Kg', width=80, anchor='center', stretch=False)
     treeview_facturas_detail.column('Valor', width=80, anchor='center', stretch=False,)
-    # treeview_facturas_detail.bind("<Button-3>", lambda event: show_context_menu(event))
     
     for camp in columns_facturas_detail:
         treeview_facturas_detail.heading(camp,  text=camp, anchor='center')    
@@ -557,9 +713,7 @@ def show_facturacion(frame):
     vscrollbar = ttk.Scrollbar(frame_facturas_detail, orient="vertical", command=treeview_facturas_detail.yview)
     vscrollbar.grid(row=1, column=8, sticky='ns')
     treeview_facturas_detail.configure(yscrollcommand=vscrollbar.set)
-    
-    context_menu = tk.Menu(frame_get_facturas, tearoff=0)
-    context_menu.add_command(label="Eliminar", )
+
     
     get_facturas()
     
