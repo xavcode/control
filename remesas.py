@@ -14,6 +14,7 @@ from datetime import datetime
 from tkinter import *
 from tkinter import ttk, messagebox,filedialog
 from tkcalendar import DateEntry
+import os
 
 
 def _convert_stringval(value):
@@ -281,6 +282,8 @@ def show_remesas(frame):
         if not table_add_guia.get_children():
             messagebox.showerror("", "No se han agregado guias a la remesa")
             return
+        
+        
         if not destino_remesa:
             messagebox.showerror("", "El campo Destino no puede estar vacío")
             return        
@@ -490,7 +493,14 @@ def show_remesas(frame):
         
         last_path_import_remesa = '.'
         
-        file_path = filedialog.askopenfilename(filetypes=[("Excel Files", "*.xlsx")])
+        # file_path = filedialog.askopenfilename(filetypes=[("Excel Files", "*.xlsx")])
+        
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_path = os.path.join(desktop_path, "plantilla_remesas.xlsx")
+        if not os.path.exists(file_path):
+            messagebox.showerror("", "No se encontró la plantilla de remesas en el escritorio")
+            return
+        
         if file_path:           
             # Convierte el DataFrame a string y divídelo por líneas para crear una lista de filas
             df = pd.read_excel(file_path, header=None)
