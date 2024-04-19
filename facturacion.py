@@ -68,24 +68,34 @@ def show_facturacion(frame):
         
         connection = sqlite3.connect(config.db_path)
         try:            
-            query_show_detail = f'''SELECT DISTINCT
-                                        COALESCE(remesas_guias.remesa_id, 'SIN REMESA') AS remesa_id, 
-                                        COALESCE(anexos_guias.guia_id,  'SIN GUIA')AS guia_id,                                        
-                                        COALESCE(anexos_guias.anexo_id, 'SIN ANEXO') AS anexo_id,
-                                        COALESCE(guias.destino, 'SIN GUIA') AS destino, 
-                                        COALESCE(guias.unidades, '0') AS unidades, 
-                                        COALESCE(guias.peso_Kg, '0') AS peso_Kg, 
-                                        COALESCE(anexos_guias.valor, 'SIN GUIA') AS valor 
-                                    FROM 
-                                        anexos_guias 
-                                    LEFT JOIN 
-                                        guias ON anexos_guias.guia_id = guias.numero_guia 
-                                    LEFT JOIN 
-                                        remesas_guias ON guias.numero_guia = remesas_guias.guia_id 
-                                    WHERE 
-                                        anexos_guias.anexo_id = '{id_anexo}' 
-                                    ORDER BY 
-                                        remesas_guias.remesa_id DESC;
+            query_show_detail = f'''SELECT 
+                                        remesa_id, 
+                                        guia_id, 
+                                        anexo_id, 
+                                        destino, 
+                                        unidades, 
+                                        peso_Kg, 
+                                        valor 
+                                    FROM (
+                                        SELECT 
+                                            COALESCE(remesas_guias.remesa_id, 'SIN REMESA') AS remesa_id, 
+                                            COALESCE(anexos_guias.guia_id,  'SIN GUIA') AS guia_id,                                      
+                                            COALESCE(anexos_guias.anexo_id, 'SIN ANEXO') AS anexo_id,
+                                            COALESCE(guias.destino, 'SIN GUIA') AS destino, 
+                                            COALESCE(guias.unidades, '0') AS unidades, 
+                                            COALESCE(guias.peso_Kg, '0') AS peso_Kg, 
+                                            COALESCE(anexos_guias.valor, 'SIN GUIA') AS valor,
+                                            ROW_NUMBER() OVER(PARTITION BY anexos_guias.guia_id ORDER BY remesas_guias.remesa_id DESC) AS rn
+                                        FROM 
+                                            anexos_guias 
+                                        LEFT JOIN 
+                                            guias ON anexos_guias.guia_id = guias.numero_guia 
+                                        LEFT JOIN 
+                                            remesas_guias ON guias.numero_guia = remesas_guias.guia_id 
+                                        WHERE 
+                                            anexos_guias.anexo_id = '{id_anexo}'
+                                    ) t
+                                    WHERE rn = 1
                                 '''
             result = connection.execute(query_show_detail).fetchall()
             if not result:
@@ -254,12 +264,11 @@ def show_facturacion(frame):
         file_path = os.path.join(file_location, file_name)
         
         if file_path:        
-            data_anexos = []        
+            data_anexos = []
             # Get the data from the treeview
-            
+                        
             for item in treeview_guias.get_children():
-                values = list(treeview_guias.item(item, 'values'))  # Convert tuple to list
-                
+                values = list(treeview_guias.item(item, 'values'))  # Convert tuple to list                
                 values[5] = int(values[5]) #type: ignore
                 values[6] = int(values[6]) #type: ignore
                 values[7] = int(values[7]) #type: ignore
@@ -268,6 +277,7 @@ def show_facturacion(frame):
             # Create a DataFrame from the data
             df = pd.DataFrame(data_anexos, columns=['Num','Remesa', 'Guia', 'Anexo', 'Destino', 'Cant', 'Peso', 'Valor'])
             df.drop(columns=['Num'], inplace=True)
+            df.sort_values(by='Remesa', ascending=True, inplace=True)
             
             with ExcelWriter(file_path, engine='xlsxwriter') as writer:
                 df.to_excel(writer, sheet_name='Hoja1', index=False, startrow=2)
@@ -280,9 +290,9 @@ def show_facturacion(frame):
                 worksheet.merge_range('A2:D2', f'RELACION DE GUIAS  R.T.P FACTURADAS ', writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center', 'border':1})) #type: ignore  
                 worksheet.merge_range('E2:G2', f'FACTURA No. {id_factura} - {fecha_factura}' , writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center','border':1})) #type: ignore
                 
-                worksheet.set_column('A:G', 12, writer.book.add_format({'align': 'center'})) #type: ignore
+                worksheet.set_column('A:G', 13, writer.book.add_format({'align': 'center'})) #type: ignore
                 worksheet.set_column('D:D', 25, writer.book.add_format({'align': 'center'})) #type: ignore
-                worksheet.set_column('G:G', 10, writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0'})) #type: ignore
+                worksheet.set_column('G:G', 14, writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0'})) #type: ignore
                 
                 total_valor = df['Valor'].sum()
                 worksheet.write(len(df) + 3, 5, 'TOTAL', writer.book.add_format({'bold': True, 'align': 'center', 'border':1})) #type: ignore
@@ -606,7 +616,6 @@ def show_facturacion(frame):
         else:
             messagebox.showerror("", f"La factura {factura_id} no existe")
         
-        
     
     def get_facturas_detail(factura_id):
         for item in treeview_facturas_detail.get_children():
@@ -615,21 +624,42 @@ def show_facturacion(frame):
         connection = sqlite3.connect(config.db_path)
         try:
             query_get_facturas_detail = f'''
-                    SELECT remesa_id, 
-                    guia_id, 
-                    anexo_id, 
-                    destino, 
-                    unidades, 
-                    peso_Kg, 
-                    valor 
-                    FROM facturas_guias WHERE factura_id = '{factura_id}'
-                    ORDER BY remesa_id ASC;
+                    SELECT 
+                            Remesa,
+                            guia_id,
+                            anexo_id,
+                            destino,
+                            unidades,
+                            peso_Kg,
+                            valor
+                        FROM (
+                            SELECT 
+                                COALESCE (remesas_guias.remesa_id, 'SIN REMESA') AS Remesa,
+                                facturas_guias.guia_id, 
+                                facturas_guias.anexo_id, 
+                                facturas_guias.destino, 
+                                facturas_guias.unidades, 
+                                facturas_guias.peso_Kg, 
+                                facturas_guias.valor,
+                                ROW_NUMBER() OVER(PARTITION BY facturas_guias.guia_id ORDER BY remesas_guias.remesa_id DESC) AS rn
+                            FROM 
+                                facturas_guias
+                            LEFT JOIN 
+                                remesas_guias ON remesas_guias.guia_id = facturas_guias.guia_id
+                            WHERE 
+                                factura_id = '{factura_id}'
+                        ) AS sub
+                        WHERE rn = 1
+                        ORDER BY anexo_id ASC;
                     '''
             result = connection.execute(query_get_facturas_detail).fetchall()
             if not result:
                 raise Exception(factura_id)
+                        
             for row in result:
-                treeview_facturas_detail.insert("", "end", values=row)
+                treeview_facturas_detail.insert("", "end", values=[num] + list(row))
+            enumerate_rows(treeview_facturas_detail)                
+            
         except Exception as e:
             messagebox.showinfo("", f"No se encuentra la factura: {str(e)}")
         connection.close()
@@ -689,23 +719,24 @@ def show_facturacion(frame):
     frame_facturas_detail = ttk.LabelFrame(frame_search_factura, text='Detalle Factura')
     frame_facturas_detail.grid(row=0, column=1, padx=5, pady=5, sticky='nse')
     
-    columns_facturas_detail = ['Remesa', 'Guia', 'Anexo', 'Destino', 'Unidades', 'Peso Kg', 'Valor']
+    columns_facturas_detail = ['Num','Remesa', 'Guia', 'Anexo', 'Destino', 'Unidades', 'Peso Kg', 'Valor']
     treeview_facturas_detail = ttk.Treeview(frame_facturas_detail, height=25, columns=columns_facturas_detail, selectmode='browse', show='headings' )
     treeview_facturas_detail.grid(row=1, column=0, columnspan=6, padx=5, pady=5, sticky= 'nswe')
-    
+    treeview_facturas_detail.column('Num', width=50, anchor='center', stretch=False)
     treeview_facturas_detail.column('Remesa', width=80, anchor='center', stretch=False)
     treeview_facturas_detail.column('Guia', width=80, anchor='center', stretch=False)
     treeview_facturas_detail.column('Anexo', width=80, anchor='center', stretch=False)
     treeview_facturas_detail.column('Destino', width=200, anchor='center', stretch=False)
-    treeview_facturas_detail.column('Unidades', width=80, anchor='center', stretch=False)
-    treeview_facturas_detail.column('Peso Kg', width=80, anchor='center', stretch=False)
+    treeview_facturas_detail.column('Unidades', width=60, anchor='center', stretch=False)
+    treeview_facturas_detail.column('Peso Kg', width=60, anchor='center', stretch=False)
     treeview_facturas_detail.column('Valor', width=80, anchor='center', stretch=False,)
+    
     
     for camp in columns_facturas_detail:
         treeview_facturas_detail.heading(camp,  text=camp, anchor='center')    
     
     vscrollbar = ttk.Scrollbar(frame_facturas_detail, orient="vertical", command=treeview_facturas_detail.yview)
-    vscrollbar.grid(row=1, column=8, sticky='ns')
+    vscrollbar.grid(row=1, column=9, sticky='ns')
     treeview_facturas_detail.configure(yscrollcommand=vscrollbar.set)
 
     
