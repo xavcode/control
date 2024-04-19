@@ -54,7 +54,7 @@ def show_guias(frame):
                         FROM guias 
                         LEFT JOIN remesas_guias ON guias.numero_guia = remesas_guias.guia_id
                         LEFT JOIN anexos_guias ON guias.numero_guia = anexos_guias.guia_id
-                        JOIN facturas_guias ON guias.numero_guia = facturas_guias.guia_id
+                        LEFT JOIN facturas_guias ON guias.numero_guia = facturas_guias.guia_id
                         WHERE numero_guia = '{number}'
                     '''
             
@@ -127,14 +127,6 @@ def show_guias(frame):
 
     search_button = ttk.Button(frame_buscar_guias,text="Buscar", command=lambda: search_guias(entry_search_guia.get().strip()))
     search_button.grid(row=2, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
-
-    
-    # ttk.Label(frame_agregar_guias, text="Agregar Guías", font=("Arial", 18)).grid(row=0, column=0, columnspan=2, pady=10 )
-    # ttk.Label(frame_agregar_guias, text="Ingrese Guía:").grid(row=1, column=0, sticky="w")
-    # entry_add_guia = ttk.Entry(frame_agregar_guias)
-    # entry_add_guia.grid(row=1, column=1, sticky="w", padx=10, pady=10)    
-    # add_button = ttk.Button(frame_agregar_guias, text="Agregar")
-    # add_button.grid(row=2, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
 
     frame_import_all = ttk.Frame(frame_guias, ) 
     frame_import_all.grid(row=2, column=0, sticky='ws', padx=10, pady=10) 
