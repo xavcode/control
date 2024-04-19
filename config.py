@@ -5,7 +5,7 @@ from tkinter import messagebox, filedialog,ttk
 
 global db_path 
 
-db_path = 'D:/intermodal/control_intermodal - copia.db'
+db_path = 'D:/intermodal/control_intermodal.db'
 # db_path = 'D:/intermodal/control/prueba_borrar.db'
 
 
