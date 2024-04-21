@@ -277,7 +277,7 @@ def show_facturacion(frame):
             # Create a DataFrame from the data
             df = pd.DataFrame(data_anexos, columns=['Num','Remesa', 'Guia', 'Anexo', 'Destino', 'Cant', 'Peso', 'Valor'])
             df.drop(columns=['Num'], inplace=True)
-            df.sort_values(by='Remesa', ascending=True, inplace=True)
+            df.sort_values(by='Anexo', ascending=True, inplace=True)
             
             with ExcelWriter(file_path, engine='xlsxwriter') as writer:
                 df.to_excel(writer, sheet_name='Hoja1', index=False, startrow=2)

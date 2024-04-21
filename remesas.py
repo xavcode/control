@@ -222,7 +222,6 @@ def show_remesas(frame):
         except Exception as e:
             messagebox.showerror("", f"Error al agregar la guia: {str(e)}")       
     
-    
     def delete_row():
         selected_item = table_add_guia.selection()
         if selected_item:
@@ -305,8 +304,7 @@ def show_remesas(frame):
                         utilidad, 
                         rentabilidad)
                         VALUES ('{id_remesa}', '{id_manifiesto}', '{conductor}', '{destino_remesa}', '{fecha_remesa}', '{total_uds}', '{total_kg}', '{total_volumen}', '{cobro_total}', '{flete_coord_rtp}', '{ingreso_operativo_total}', '{gasto_operativo}', '{utilidad}', '{rentabilidad}');
-                 '''
-        
+                 '''        
         #create the list for insert guias
         rows_to_insert = []
         for row in table_add_guia.get_children():
@@ -489,12 +487,85 @@ def show_remesas(frame):
             table_list_remesas.delete(*table_list_remesas.get_children())       
     def clean_table_guias():
         table_add_guia.delete(*table_add_guia.get_children())
-    def import_remesa():
+    
+    def get_remesa(df):
+        clean_entries_remesa()
+        # Check if the last row contains the word "Total"
+        #if ther is title has a header, is removed
+        first_row = df.iloc[0].to_string()
+        if 'relacion' in first_row.lower():
+            df= df.drop(df.index[0])
+
+        #get the drivers name
+        conductor = df.iloc[0].to_string()
+        if 'conductor' in conductor.lower():
+            conductor = str(df.iat[0,0])
+            conductor = conductor.split(':')[1].strip()
+            conductor = conductor.replace("CONDUCTOR", "").strip()
         
-        last_path_import_remesa = '.'
+        #get the headers data
+        id_remesa = str(df.iat[0, 5].strip())
+        manifiesto = str(df.iat[0, 7].strip())
+        fecha = str(df.iat[1, 8])
+        formated_date = datetime.strptime(fecha, '%Y-%m-%d %H:%M:%S')
+        formated_date = formated_date.strftime('%d-%m-%Y')
+
+        # delete last row if has total word 
+        del_total_row = df.iloc[-1].to_string()
+        if 'total' in del_total_row.lower():
+            df = df.drop(df.index[-1])
+
+        df.columns = df.iloc[1]
+        df = df.iloc[2:]
+        df.rename(columns={df.columns[8]: 'COBRO'},  inplace=True)
+
+        # dated formated with dd/mm/yy format
+        df.iloc[:, 5] = pd.to_datetime(df.iloc[:, 5]).dt.strftime('%d-%m-%Y')
+        #adding vol column filled with ceros,
+        df.insert(3, 'Vol', 0)
         
-        # file_path = filedialog.askopenfilename(filetypes=[("Excel Files", "*.xlsx")])
+        # delet characters in column cobros
         
+        df['COBRO'] = df['COBRO'].apply(lambda x: str(x).replace('.', ''))
+        df['COBRO'] = df['COBRO'].apply(lambda x: ''.join(c for c in x if c.isdigit()))
+        df['COBRO'] = df['COBRO'].apply(lambda x: 0 if not str(x).isdigit() else x)
+        df['COBRO'] = pd.to_numeric(df['COBRO'])                
+        
+        kg_sum = df.iloc[:, 4].sum()
+        cobro_sum = df.iloc[:, 9].sum()
+        uds_sum = df.iloc[:, 2].sum()
+        cobro_sum = df.iloc[:, 9].sum()
+        valor_sum = df.iloc[:, 7].sum()
+        
+        entry_id_remesa.insert(0, id_remesa)            
+        entry_manifiesto.insert(0, manifiesto)
+        entry_conductor.insert(0, conductor)
+        entry_fecha.insert(0, formated_date)
+        entry_total_uds.insert(0, str(uds_sum))
+        entry_total_kg.insert(0, str(kg_sum))
+        entry_total_volumen.insert(0, str(0))
+        entry_flete_coord_rtp.insert(0, str(valor_sum))
+        entry_ingreso_operativo_total.insert(0, str(valor_sum))
+        entry_gasto_operativo.insert(0, str(0)) 
+        entry_cobro_total.insert(0, str(cobro_sum))
+        entry_utilidad.insert(0, str(valor_sum - cobro_sum))
+        entry_rentabilidad.insert(0, str((valor_sum / 1) * 100))
+        
+        guias = df.values.tolist()
+        guias = [row[1:] for row in guias]
+        
+        clean_table_guias()
+        for guia in guias:
+            if guia[8] != 0:
+                table_add_guia.insert("", "end", values=guia, tags=("has_cobro",))
+            else :
+                table_add_guia.insert("", "end", values=guia)   
+            
+                table_add_guia.insert("", "end", values=guia)
+        # clean_table_remesas()
+        # list_remesas()
+    def import_remesa_from_app():
+                
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
         file_path = os.path.join(desktop_path, "plantilla_remesas.xlsx")
         if not os.path.exists(file_path):
@@ -504,84 +575,8 @@ def show_remesas(frame):
         if file_path:           
             # Convierte el DataFrame a string y divídelo por líneas para crear una lista de filas
             df = pd.read_excel(file_path, header=None)
+            get_remesa(df)   
             
-            def get_remesa(df):
-                clean_entries_remesa()
-                # Check if the last row contains the word "Total"
-                #if ther is title has a header, is removed
-                first_row = df.iloc[0].to_string()
-                if 'relacion' in first_row.lower():
-                    df= df.drop(df.index[0])
-
-                #get the drivers name
-                conductor = df.iloc[0].to_string()
-                if 'conductor' in conductor.lower():
-                    conductor = str(df.iat[0,0])
-                    conductor = conductor.split(':')[1].strip()
-                    conductor = conductor.replace("CONDUCTOR", "").strip()
-
-                #get the headers data
-                id_remesa = df.iat[0, 5].strip()
-                manifiesto = df.iat[0, 7].strip()
-                fecha = str(df.iat[1, 8])
-                formated_date = datetime.strptime(fecha, '%Y-%m-%d %H:%M:%S')
-                formated_date = formated_date.strftime('%d-%m-%Y')
-
-                # delete last row if has total word 
-                del_total_row = df.iloc[-1].to_string()
-                if 'total' in del_total_row.lower():
-                    df = df.drop(df.index[-1])
-
-                df.columns = df.iloc[1]
-                df = df.iloc[2:]
-                df.rename(columns={df.columns[8]: 'COBRO'},  inplace=True)
-
-                # dated formated with dd/mm/yy format
-                df.iloc[:, 5] = pd.to_datetime(df.iloc[:, 5]).dt.strftime('%d-%m-%Y')
-                #adding vol column filled with ceros,
-                df.insert(3, 'Vol', 0)
-
-                # delet characters in column cobros
-                
-                df['COBRO'] = df['COBRO'].apply(lambda x: str(x).replace('.', ''))
-                df['COBRO'] = df['COBRO'].apply(lambda x: ''.join(c for c in x if c.isdigit()))
-                df['COBRO'] = df['COBRO'].apply(lambda x: 0 if not str(x).isdigit() else x)
-                df['COBRO'] = pd.to_numeric(df['COBRO'])                
-                
-                kg_sum = df.iloc[:, 4].sum()
-                cobro_sum = df.iloc[:, 9].sum()
-                uds_sum = df.iloc[:, 2].sum()
-                cobro_sum = df.iloc[:, 9].sum()
-                valor_sum = df.iloc[:, 7].sum()
-                          
-                entry_id_remesa.insert(0, id_remesa)            
-                entry_manifiesto.insert(0, manifiesto)
-                entry_conductor.insert(0, conductor)
-                entry_fecha.insert(0, formated_date)
-                entry_total_uds.insert(0, str(uds_sum))
-                entry_total_kg.insert(0, str(kg_sum))
-                entry_total_volumen.insert(0, str(0))
-                entry_flete_coord_rtp.insert(0, str(valor_sum))
-                entry_ingreso_operativo_total.insert(0, str(valor_sum))
-                entry_gasto_operativo.insert(0, str(0)) 
-                entry_cobro_total.insert(0, str(cobro_sum))
-                entry_utilidad.insert(0, str(valor_sum - cobro_sum))
-                entry_rentabilidad.insert(0, str((valor_sum / 1) * 100))
-                
-                guias = df.values.tolist()
-                guias = [row[1:] for row in guias]
-                
-                clean_table_guias()
-                for guia in guias:
-                    if guia[8] != 0:
-                        table_add_guia.insert("", "end", values=guia, tags=("has_cobro",))
-                    else :
-                        table_add_guia.insert("", "end", values=guia)   
-                    
-                    # table_add_guia.insert("", "end", values=guia)
-            # clean_table_remesas()
-            # list_remesas()
-            get_remesa(df)
     def export_remesa():
         if not entry_id_remesa.get():
             messagebox.showerror("", "Ingrese un número de remesa")
@@ -1000,7 +995,7 @@ def show_remesas(frame):
     frame_buttons = Frame(frame_add_remesa, )
     frame_buttons.grid(row=4, column=0, columnspan=10, padx=(10, 0), pady=10, sticky="we")
     
-    btn_import_remesa = ttk.Button(frame_buttons, text="Importar Remesa", command= lambda: import_remesa())
+    btn_import_remesa = ttk.Button(frame_buttons, text="Importar Remesa", command= lambda: import_remesa_from_app())
     btn_import_remesa.grid(row=4, column=0, sticky='w', padx=(0,5), pady=10)
     
     btn_export_remesa = ttk.Button(frame_buttons, text="Exportar Remesa", command= lambda: export_remesa())
