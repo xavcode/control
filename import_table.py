@@ -78,9 +78,13 @@ def import_remesa_from_excel():
         valor_sum = df.iloc[:, 7].sum()
         
         destino = f"{df.iat[0, 5].upper().strip()}"
-        if destino == 'PIEDRANCHA':
-            destino = 'PIEDRAHANCHA'
-        destino = f"{destino} (NAR)"
+        
+        if not destino.endswith('(NAR)'):
+            destino = f"{destino} (NAR)"
+        
+        if destino == 'PIEDRANCHA (NAR)':
+            destino = 'PIEDRAHANCHA (NAR)'
+       
         
         guias = df.values.tolist()
         guias = [row[1:] for row in guias]
@@ -107,6 +111,7 @@ def import_remesa_from_excel():
                         rentabilidad)
                         VALUES ('{id_remesa}', '{manifiesto}', '{conductor}', '{destino}', '{formated_date}', {uds_sum}, {kg_sum}, {0}, {cobro_sum}, {valor_sum}, {valor_sum}, {0}, {0}, {0});
                     '''
+            print(query)
             cursor.execute(query)
             for guia in guias:
                 cursor.execute(f"INSERT INTO remesas_guias (remesa_id, guia_id, valor) VALUES ('{id_remesa}', '{guia[0]}', {guia[6]}) ")
@@ -122,7 +127,6 @@ def import_remesa_from_excel():
                 messagebox.showerror("", "Ocurrió un error al guardar la remesa")
         connection.close()
     messagebox.showinfo("", "Remesa guardada ")
-
 
 root = tk.Tk()
 root.withdraw()
