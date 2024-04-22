@@ -13,7 +13,7 @@ def show_destinos(frame):
         # Connect to the SQLite database
         conn = sqlite3.connect(config.db_path)
         # Execute the query to fetch the destinations
-        query = "SELECT * FROM destinos"
+        query = "SELECT * FROM destinos ORDER BY destino ASC"
         df = pd.read_sql_query(query, conn)
         # Insert the data into the table
         for index, row in df.iterrows():
@@ -96,8 +96,7 @@ def show_destinos(frame):
                 entry_destino.insert(0, row[0])
                 entry_valor_destino.insert(0, row[1])
         except:
-            messagebox.showerror("Error", "No se ha encontrado el destino")
-        
+            messagebox.showerror("Error", "No se ha encontrado el destino")        
         connection.close()
 
     def update_destino(destino):
