@@ -144,7 +144,6 @@ def show_remesas(frame):
         entry_rentabilidad.delete(0,tk.END)
         entry_rentabilidad.insert(0, str(total_rentabilidad))
         entry_rentabilidad.state(["readonly"])
-        
     def clean_fields_guia():
         enable_entries_guia()
         entry_guia.delete(0, tk.END)
@@ -221,7 +220,6 @@ def show_remesas(frame):
             entry_guia.focus_set()            
         except Exception as e:
             messagebox.showerror("", f"Error al agregar la guia: {str(e)}")       
-    
     def delete_row():
         selected_item = table_add_guia.selection()
         if selected_item:
@@ -338,34 +336,35 @@ def show_remesas(frame):
         
         clean_table_remesas()
         list_remesas()
-        
     def delete_remesa(id_remesa):
-            try:
-                confirmed = messagebox.askyesno("Confirmar", f"Desea borrar la remesa {id_remesa}?")
-                if not confirmed:
-                    return
-                connection = sqlite3.connect(config.db_path)
-                cursor = connection.cursor()
+        try:
+            confirmed = messagebox.askyesno("Confirmar", f"Desea borrar la remesa {id_remesa}?")
+            if not confirmed:
+                return
+            connection = sqlite3.connect(config.db_path)
+            cursor = connection.cursor()
 
-                # Primera consulta para eliminar de la tabla remesas_guias
-                query_remesas_guias = f"DELETE FROM remesas_guias WHERE remesa_id = '{id_remesa}';"
-                
-                cursor.execute(query_remesas_guias)
-
-                # Segunda consulta para eliminar de la tabla remesas
-                query_remesas = f"DELETE FROM remesas WHERE id_remesa = '{id_remesa}';"
-                cursor.execute(query_remesas)
-
-                connection.commit()
-                connection.close()
-                messagebox.showinfo("", "Remesa eliminada con éxito")
-                list_remesas()
-            except sqlite3.Error as e:
-                messagebox.showerror("", f"Error al eliminar la remesa: {e}")
+            # Primera consulta para eliminar de la tabla remesas_guias
+            query_remesas_guias = f"DELETE FROM remesas_guias WHERE remesa_id = '{id_remesa}';"
             
-            table_list_guias.delete(*table_list_guias.get_children())
+            cursor.execute(query_remesas_guias)
+            connection.commit()
+
+            # Segunda consulta para eliminar de la tabla remesas
+            query_remesas = f"DELETE FROM remesas WHERE id_remesa = '{id_remesa}';"
+            cursor.execute(query_remesas)
+
+            connection.commit()
+            connection.close()
+            messagebox.showinfo("", "Remesa eliminada con éxito")
             clean_table_remesas()
             list_remesas()
+        except sqlite3.Error as e:
+            messagebox.showerror("", f"Error al eliminar la remesa: {e}")
+        
+        table_list_guias.delete(*table_list_guias.get_children())
+        clean_table_remesas()
+        list_remesas()
     def enable_entries():
         entry_id_remesa.state(["!readonly"])
         entry_manifiesto.state(["!readonly"])
@@ -487,7 +486,6 @@ def show_remesas(frame):
             table_list_remesas.delete(*table_list_remesas.get_children())       
     def clean_table_guias():
         table_add_guia.delete(*table_add_guia.get_children())
-    
     def get_remesa(df):
         clean_entries_remesa()
         # Check if the last row contains the word "Total"
@@ -576,7 +574,6 @@ def show_remesas(frame):
             # Convierte el DataFrame a string y divídelo por líneas para crear una lista de filas
             df = pd.read_excel(file_path, header=None)
             get_remesa(df)   
-            
     def export_remesa():
         if not entry_id_remesa.get():
             messagebox.showerror("", "Ingrese un número de remesa")
@@ -795,9 +792,10 @@ def show_remesas(frame):
                         cobro_total = '{cobro_total}'
                         WHERE id_remesa = '{id_remesa}';                        
                     '''
+            cursor = connection.cursor()
+            cursor.execute(query)
             
-                # messagebox.showinfo("", "Remesa actualizada con éxito")
-            
+ 
         except Exception as e:
             messagebox.showerror("", f"Error al actualizar los datos de la remesa: {str(e)}") 
        
@@ -822,12 +820,12 @@ def show_remesas(frame):
             list_remesas()
             search_remesas_edit(id_remesa)
             
+            messagebox.showinfo("", "Remesa actualizada con éxito")
         except Exception as e:
             messagebox.showerror("", f"Error al actualizar las guias: {str(e)}")        
-            
+
         connection.close()
-            
-    parent = ttk.Frame(frame, width=1366, height=900,)
+    parent = ttk.Frame(frame, width=1366, height=900)
     parent.grid(row=0, column=0, padx=10, sticky="we")
     parent.grid_propagate(False)
     for widget in parent.winfo_children():
@@ -1038,16 +1036,16 @@ def show_remesas(frame):
     def search_guias_remesa(id_remesa):
         connection = sqlite3.connect(config.db_path)
         query = f'''
-                   SELECT DISTINCT
+                    SELECT DISTINCT
                         remesas_guias.guia_id, 
-                        guias.estado, 
-                        guias.destino, 
-                        guias.destinatario, 
-                        guias.unidades, 
-                        guias.peso_Kg, 
-                        guias.volumen_m3, 
-                        remesas_guias.valor, 
-                        guias.fecha_de_asignacion, 
+                        COALESCE ( guias.estado, 'SIN GUIA') AS estado,
+                        COALESCE (guias.destinatario, 'SIN GUIA' ) AS destinatario,
+                        COALESCE (guias.destino, 'SIN GUIA' ) AS destino,
+                        COALESCE (guias.unidades, 'SIN GUIA') AS unidades,
+                        COALESCE (guias.peso_Kg, 'SIN GUIA') AS peso_Kg,
+                        COALESCE (guias.volumen_m3, 'SIN GUIA') AS volumen_m3,
+                        COALESCE (remesas_guias.valor, 'SIN GUIA') AS valor,
+                        COALESCE (guias.fecha_de_asignacion, 'SIN GUIA') AS fecha_de_asignacion,
                         COALESCE(anexos_guias.anexo_id, 'SIN ANEXO') AS en_anexo,
                         COALESCE(facturas_guias.factura_id, 'SIN FACT.') AS en_factura
                     FROM 
@@ -1061,8 +1059,7 @@ def show_remesas(frame):
                     WHERE 
                         remesas_guias.remesa_id = '{id_remesa}'
                     ORDER BY 
-                        guias.numero_guia;
-                                              
+                        guias.numero_guia;                          
                     '''
         result = connection.execute(query)
         data = result.fetchall()

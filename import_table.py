@@ -15,11 +15,11 @@ def import_remesa_from_excel():
         desktop_path,
         "RELACION_TUMACO.xlsm",
     )
-    if not os.path.exists(file_path):
-        messagebox.showerror(
-            "", "No se encontró la plantilla de remesas en el escritorio"
-        )
-        return
+    # if not os.path.exists(file_path):
+    #     messagebox.showerror(
+    #         "", "No se encontró la plantilla de remesas en el escritorio"
+    #     )
+    #     return
 
     if file_path:
         # Convierte el DataFrame a string y divídelo por líneas para crear una lista de filas
@@ -126,7 +126,6 @@ def import_remesa_from_excel():
             else:
                 messagebox.showerror("", "Ocurrió un error al guardar la remesa")
         connection.close()
-    messagebox.showinfo("", "Remesa guardada ")
 
 root = tk.Tk()
 root.withdraw()
