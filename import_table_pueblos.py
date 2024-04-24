@@ -13,19 +13,21 @@ def import_remesa_from_excel():
     desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
     file_path = os.path.join(
         desktop_path,
-        "RELACION_TUMACO.xlsm",
+        "RELACION_PUEBLOS_2024.xlsm",
     )
-    # if not os.path.exists(file_path):
-    #     messagebox.showerror(
-    #         "", "No se encontró la plantilla de remesas en el escritorio"
-    #     )
-    #     return
+    if not os.path.exists(file_path):
+        messagebox.showerror(
+            "", "No se encontró el archivo"
+        )
+        return
 
     if file_path:
-        # Convierte el DataFrame a string y divídelo por líneas para crear una lista de filas
+        
+        # if have password we need to use this code
+        
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
         df = pd.read_excel(
-            f"{desktop_path}/RELACION_TUMACO.xlsm", header=None, sheet_name="plantilla_remesa"
+            f"{desktop_path}/RELACION_PUEBLOS_2024.xlsm", header=None, sheet_name="plantilla_remesa"
         )
         
         # # Check if the last row contains the word "Total"
@@ -41,10 +43,11 @@ def import_remesa_from_excel():
             conductor = str(df.iat[0,0])
             conductor = conductor.split(':')[1].strip()
             conductor = conductor.replace("CONDUCTOR", "").strip()
-            
         
         #get the headers data
-        id_remesa = str(df.iat[0, 5].strip())
+        id_remesa = str(df.iat[0, 5])
+        print(id_remesa)
+        
         manifiesto = str(df.iat[0, 7].strip())
         fecha = str(df.iat[1, 8])
         formated_date = datetime.strptime(fecha, '%Y-%m-%d %H:%M:%S')
