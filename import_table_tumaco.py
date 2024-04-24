@@ -10,30 +10,20 @@ import config
 # Lee la tabla de Excel
 
 def import_remesa_from_excel():
-    desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-    file_path = os.path.join(
-        desktop_path,
-        "RELACION TUMACO 2024.xlsm",
-    )
-    # if not os.path.exists(file_path):
-    #     messagebox.showerror(
-    #         "", "No se encontró la plantilla de remesas en el escritorio"
-    #     )
-    #     return
+    file_path = r"I:\RELACION TUMACO 2024.xlsm"
 
-    if file_path:
-        # Convierte el DataFrame a string y divídelo por líneas para crear una lista de filas
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        df = pd.read_excel(
-            f"{desktop_path}/RELACION TUMACO 2024.xlsm", header=None, sheet_name="plantilla_remesa"
+    if not os.path.exists(file_path):
+        messagebox.showerror(
+            "", "No se encontró el archivo RELACION TUMACO 2024.xlsm"
         )
-        
-        # # Check if the last row contains the word "Total"
-        # #if ther is title has a header, is removed
+        return
+
+    if file_path:      
+        df = pd.read_excel(f"{file_path}", header=None, sheet_name="plantilla_remesa")
+        # #if ther is title or a header, is removed
         first_row = df.iloc[0].to_string()
         if 'relacion' in first_row.lower():
             df= df.drop(df.index[0])
-        
 
         #get the drivers name
         conductor = df.iloc[0].to_string()

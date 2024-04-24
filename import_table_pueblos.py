@@ -10,24 +10,18 @@ import config
 # Lee la tabla de Excel
 
 def import_remesa_from_excel():
-    desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-    file_path = os.path.join(
-        desktop_path,
-        "RELACION_PUEBLOS_2024.xlsm",
-    )
+   
+    
+    file_path = r"I:\RELACION PUEBLOS 2024.xlsm"
+
     if not os.path.exists(file_path):
         messagebox.showerror(
             "", "No se encontró el archivo"
         )
         return
-
-    if file_path:
-        
-        # if have password we need to use this code
-        
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+    if file_path:        
         df = pd.read_excel(
-            f"{desktop_path}/RELACION_PUEBLOS_2024.xlsm", header=None, sheet_name="plantilla_remesa"
+            f"{file_path}", header=None, sheet_name="plantilla_remesa"
         )
         
         # # Check if the last row contains the word "Total"
@@ -45,7 +39,7 @@ def import_remesa_from_excel():
             conductor = conductor.replace("CONDUCTOR", "").strip()
         
         #get the headers data
-        id_remesa = str(df.iat[0, 5])
+        id_remesa = str(df.iat[0, 5].strip())
         print(id_remesa)
         
         manifiesto = str(df.iat[0, 7].strip())
@@ -120,7 +114,7 @@ def import_remesa_from_excel():
                 cursor.execute(f"INSERT INTO remesas_guias (remesa_id, guia_id, valor) VALUES ('{id_remesa}', '{guia[0]}', {guia[6]}) ")
             
             connection.commit()            
-            messagebox.showinfo("", "Remesa guardada correctamente")
+            messagebox.showinfo("", f"Remesa {id_remesa} guardada correctamente")
             
         except Exception as e:
             connection.rollback()
