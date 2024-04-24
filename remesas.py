@@ -752,9 +752,6 @@ def show_remesas(frame):
         except Exception as e:
             messagebox.showerror("", f"Error al buscar la guia: {str(e)}")
     def update_remesa():
-        #IN CASE TO NEED EDIT THE REMESA_ID ENABLE THIS LINES
-        # id_remesa_edit = entry_editar_remesa.get()
-        # id_remesa_new = entry_id_remesa.get()
         id_remesa = entry_id_remesa.get()
         manifiesto = entry_manifiesto.get()
         conductor = entry_conductor.get()
@@ -794,12 +791,9 @@ def show_remesas(frame):
                     '''
             cursor = connection.cursor()
             cursor.execute(query)
-            
- 
         except Exception as e:
             messagebox.showerror("", f"Error al actualizar los datos de la remesa: {str(e)}") 
        
-        
         try:
             #create the list for update the values of the remesas_guias table
             rows_to_update = []
