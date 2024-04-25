@@ -161,7 +161,7 @@ def show_anexos(frame):
             for row in tree.get_children():
                 list_guias_values = [tree.item(row)["values"][0], tree.item(row)["values"][2]]
                 list_guias_values = tree.item(row)["values"]
-                list_guias_to_insert.append((list_guias_values[0], list_guias_values[2], list_guias_values[7], list_guias_values[8]))
+                list_guias_to_insert.append((list_guias_values[0], list_guias_values[2], list_guias_values[3], list_guias_values[4], list_guias_values[7], list_guias_values[8]))
                 
         
         except Exception as e:
@@ -182,16 +182,17 @@ def show_anexos(frame):
             
             
         #insert guias to anexos_guias
-        query_anexos = f"INSERT INTO anexos_guias (anexo_id, guia_id, destino, valor, tipo ) VALUES "
+        query_anexos = f"INSERT INTO anexos_guias (anexo_id, guia_id, destino, unds, peso, valor, tipo ) VALUES "
         for i in range(len(list_guias_to_insert)):
             row = list_guias_to_insert[i]
-            query_anexos += f"('{id_anexo}', '{row[0]}', '{row[1]}', {row[2]}, '{row[3]}' )"
+            query_anexos += f"('{id_anexo}', '{row[0]}', '{row[1]}', {row[2]}, {row[3]}, {row[4]}, '{row[5]}' )"
                   
             if i != len(list_guias_to_insert) - 1:
                 query_anexos += ", "
             else:
                 query_anexos += ";" 
         
+        print(query_anexos)
         try:
             result = connection.execute(query_anexos)
             connection.commit()
