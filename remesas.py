@@ -1,4 +1,5 @@
 
+from csv import writer
 import os
 import tkinter as tk
 import sqlite3
@@ -15,6 +16,7 @@ from tkinter import *
 from tkinter import ttk, messagebox,filedialog
 from tkcalendar import DateEntry
 import os
+import pandas as pd
 
 
 def _convert_stringval(value):
@@ -1130,7 +1132,100 @@ def show_remesas(frame):
         entryutilidad.insert(0, data[0][11])
         entryrentabilidad.insert(0,str(data[0][12]))
         entries_state_disabled()
-  
+    def export_remesa_to_factura(id_remesa):
+        remesa, manifiesto, conductor, fecha = '', '', '', ''
+        
+        if not id_remesa:
+            messagebox.showerror("", "Ingrese un número de remesa")
+            return        
+        connection = sqlite3.connect(config.db_path)
+        
+        try:
+            query_header = f''' 
+                                SELECT id_remesa, manifiesto, conductor, fecha
+                                FROM remesas
+                                WHERE id_remesa = '{id_remesa}';
+                                '''
+            result_header = connection.execute(query_header)
+            data_header = result_header.fetchall()
+            for row in data_header:
+                remesa = row[0]
+                manifiesto = row[1]
+                conductor = row[2]
+                fecha = row[3]
+                
+            if not data_header:
+                messagebox.showerror("", "No se encontró la remesa")
+                return
+           
+            
+            query = f'''
+                        SELECT DISTINCT 
+                            COALESCE (remesas_guias.guia_id, '' ) AS 'Guia',
+                            COALESCE (anexos_guias.unds, 'aa') AS 'Cant' ,
+                            COALESCE (anexos_guias.peso, 'pp') AS 'Kg',
+                            COALESCE (anexos_guias.destino, '') AS 'Destino',
+                            COALESCE (guias.fecha_de_asignacion, '') AS 'Fe. Recep',
+                            COALESCE (anexos_guias.valor, '' ) AS 'Valor',
+                            COALESCE ((guias.balance_FCE + guias.balance_RCE), '') as 'Cobro',
+                            COALESCE (anexos_guias.anexo_id, '') AS 'Anexo',
+                            COALESCE (facturas_guias.factura_id, '') AS 'Factura'
+
+                            FROM remesas_guias
+                            LEFT JOIN facturas_guias ON remesas_guias.guia_id = facturas_guias.guia_id
+                            JOIN remesas ON remesas.id_remesa = remesas_guias.remesa_id
+                            LEFT JOIN anexos_guias ON anexos_guias.guia_id = facturas_guias.guia_id
+                            LEFT JOIN guias on guias.numero_guia = remesas_guias.guia_id
+                            WHERE remesas_guias.remesa_id = '{id_remesa}'
+                            ORDER BY facturas_guias.guia_id ASC            
+                      '''
+            result = connection.execute(query)
+            
+            data = result.fetchall()
+            if not data:
+                messagebox.showerror("", "No se encontraron guias")
+                return
+            
+            file_location = "D:/intermodal/control/facturas"
+            file_name = f"{id_remesa}.xlsx"
+            file_path = os.path.join(file_location, file_name)
+            
+            
+            if file_path:
+                df = pd.DataFrame(data, columns=["Guia", "Cant", "Kg", "Destino", "Fe. Recep", "Valor", "Cobro", "Anexo", "Factura"])
+                df.insert(0, "No", range(1, len(df) + 1))
+                with ExcelWriter(file_path, engine='xlsxwriter') as writer:
+                    df.to_excel(writer, sheet_name='Hoja1', index=False, startrow=2)
+                
+                    worksheet = writer.sheets['Hoja1']
+                    worksheet.merge_range('A1:J1', f'RELACION REMISIONES ENTREGADAS AL CONDUCTOR.', writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center', 'border':1 })) #type: ignore
+                    worksheet.merge_range('A2:D2', f'Conductor: {conductor}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
+                    
+                    worksheet.write('E2:E2', f'{remesa}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
+                    
+                    worksheet.merge_range('F2:G2', f'{manifiesto}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
+                    worksheet.write('H2:H2', 'Fecha', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
+                    worksheet.merge_range('I2:J2', f'{fecha}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
+                    
+                    worksheet.set_column('A:A', 3, writer.book.add_format({'align': 'center', 'font_size': 9})) # type: ignore
+                    worksheet.set_column('B:B', 13, writer.book.add_format({'align': 'center', 'font_size': 9})) # type: ignore
+                    worksheet.set_column('C:C', 5, writer.book.add_format({'align': 'center', 'font_size': 9})) # type: ignore
+                    
+                    worksheet.set_column('D:D', 4, writer.book.add_format({'align': 'center', 'font_size': 9})) # type: ignore
+                    worksheet.set_column('E:E', 17, writer.book.add_format({'align': 'center', 'font_size': 9})) # type: ignore
+                    worksheet.set_column('F:F', 10, writer.book.add_format({'align': 'center', 'font_size': 9})) # type: ignore
+                    worksheet.set_column('G:H', 7, writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0', 'font_size': 9})) # type: ignore
+                    
+                    worksheet.set_column('I:J', 7, writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0', 'font_size': 9})) # type: ignore
+                    
+                    
+            
+            messagebox.showinfo("", "Remesa exportada con éxito")
+            # os.startfile("remesa.xlsx")
+            
+        except Exception as e:
+            messagebox.showerror("", f"Error al exportar la remesa: {str(e)}")  
+
     #********** TABLE LIST  REMESAS **********#
     #********** TABLE LIST  REMESAS **********#
     frame_search_remesa = ttk.Frame(frame,)
@@ -1286,6 +1381,10 @@ def show_remesas(frame):
     table_list_guias.configure(xscrollcommand=hscrollbar.set)
     
     tabs_remesas.add(frame_search_remesa, text="Buscar Remesa")
+    entry_export_remesa_factura = ttk.Entry(frame_search_single_remesa)
+    entry_export_remesa_factura.grid(row=1, column=6, padx=5, )
+    btn_export_remesa_factura = ttk.Button(frame_search_single_remesa, text="Exportar Remesa", command= lambda: export_remesa_to_factura(entry_export_remesa_factura.get().strip()) )
+    btn_export_remesa_factura.grid(row=1, column=5, padx=(150,5), )
     
     list_remesas()
     
