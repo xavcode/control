@@ -1026,7 +1026,6 @@ def show_remesas(frame):
         entrysearch_remesa.insert(0, id_remesa)
         search_remesa(id_remesa)
         search_guias_remesa(id_remesa)
-    
     def search_guias_remesa(id_remesa):
         connection = sqlite3.connect(config.db_path)
         query = f'''
@@ -1065,7 +1064,6 @@ def show_remesas(frame):
                 table_list_guias.insert("", "end", values=row, tags=("paid_invoice",))
             else: 
                 table_list_guias.insert("", "end", values=row, tags=("pend_invoice",) )        
-    
     def btnsearch_remesa(id_remesa):        
         if id_remesa:
             found = False
@@ -1081,9 +1079,7 @@ def show_remesas(frame):
                 search_remesa(id_remesa)
                 search_guias_remesa(id_remesa)
         else:
-            messagebox.showerror("Error", "Por favor, ingrese un ID de remesa")
-
-    
+            messagebox.showerror("Error", "Por favor, ingrese un ID de remesa")    
     def search_remesa(id_remesa):  
         #function to enable entries for editing  
         entries = [entryid_remesa, entrymanifiesto, entryconductor, entrydestino, entryfecha, entrytotal_kg, entrytotal_uds, entrytotal_volumen, entryflete_coord_rtp, entryingreso_operativo_total, entrygasto_operativo, entryutilidad, entryrentabilidad]
@@ -1134,8 +1130,7 @@ def show_remesas(frame):
         entryutilidad.insert(0, data[0][11])
         entryrentabilidad.insert(0,str(data[0][12]))
         entries_state_disabled()
-
-    
+  
     #********** TABLE LIST  REMESAS **********#
     #********** TABLE LIST  REMESAS **********#
     frame_search_remesa = ttk.Frame(frame,)
@@ -1145,7 +1140,6 @@ def show_remesas(frame):
     #     frame_search_remesa.grid_columnconfigure(i, weight=1)
     # for i in range(10):
     #     frame_search_remesa.grid_rowconfigure(i, weight=1)
-    
     
     entry_cols = ("id_remesa", "manifiesto", "destino", "conductor", "fecha", "ingreso_operativo_total", "rentabilidad", "total_guias", "guias_facturadas", "guias_sin_facturar")
     table_list_remesas = ttk.Treeview(frame_search_remesa, columns= entry_cols, show="headings", height=8)

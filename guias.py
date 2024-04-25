@@ -27,10 +27,9 @@ def show_guias(frame):
         # Create a connection to the database
         connection = sqlite3.connect(config.db_path)
         df.columns = ["estado","numero_guia","fecha_de_asignacion","remitente","destino","destinatario","direccion_de_entrega","fecha_maxima_de_entrega","unidades","peso_Kg","volumen_m3","valor_declarado_(COP)","fecha_entrega_reexpedidor","hora_entrega_reexpedidor","ultima_causal","fecha_ultima_causal","balance_RCE","balance_FCE","fd","rd","ruta","telefono"]
-        # print(df)
         
         df_list = df.values.tolist()
-        print(df_list)
+        
         
         try: 
             cursor = connection.cursor()
@@ -39,7 +38,7 @@ def show_guias(frame):
                 cursor.execute("INSERT OR REPLACE INTO guias (estado, numero_guia, fecha_de_asignacion, remitente, destino, destinatario, direccion_de_entrega, fecha_maxima_de_entrega, unidades, peso_Kg, volumen_m3, 'valor_declarado_(COP)', fecha_entrega_reexpedidor, hora_entrega_reexpedidor, ultima_causal, fecha_ultima_causal, balance_RCE, balance_FCE, fd, rd, ruta, telefono) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", guia)
             connection.commit()
             rows_affected = cursor.rowcount
-            messagebox.showinfo("", f"{rows_affected} Guias importadas con éxito")
+            messagebox.showinfo("", "Guias importadas con éxito")
         except Exception as e:
             messagebox.showerror("Error", f"Error al importar las guias {str(e)}")
                     
