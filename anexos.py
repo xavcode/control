@@ -180,7 +180,6 @@ def show_anexos(frame):
             if "UNIQUE constraint failed" in str(e):
                 messagebox.showerror("", f"El anexo {id_anexo} ya existe")
             
-            
         #insert guias to anexos_guias
         query_anexos = f"INSERT INTO anexos_guias (anexo_id, guia_id, destino, unds, peso, valor, tipo ) VALUES "
         for i in range(len(list_guias_to_insert)):
@@ -192,7 +191,6 @@ def show_anexos(frame):
             else:
                 query_anexos += ";" 
         
-        print(query_anexos)
         try:
             result = connection.execute(query_anexos)
             connection.commit()

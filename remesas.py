@@ -1135,6 +1135,7 @@ def show_remesas(frame):
     
     def export_remesa_to_factura(id_remesa):
         remesa, manifiesto, conductor, fecha = '', '', '', ''
+        total_kg, total_uds, ingreso_operativo_total, cobro_total = 0,0,0,0
         
         if not id_remesa:
             messagebox.showerror("", "Ingrese un número de remesa")
@@ -1143,7 +1144,7 @@ def show_remesas(frame):
         
         try:
             query_header = f''' 
-                                SELECT id_remesa, manifiesto, conductor, fecha
+                                SELECT id_remesa, manifiesto, conductor, fecha, total_kg, total_uds, ingreso_operativo_total, cobro_total 
                                 FROM remesas
                                 WHERE id_remesa = '{id_remesa}';
                                 '''
@@ -1154,6 +1155,11 @@ def show_remesas(frame):
                 manifiesto = row[1]
                 conductor = row[2]
                 fecha = row[3]
+                total_kg = row[4]
+                total_uds = row[5]
+                ingreso_operativo_total = row[6]
+                cobro_total = row[7]
+                
                 
             if not data_header:
                 messagebox.showerror("", "No se encontró la remesa")
@@ -1161,45 +1167,66 @@ def show_remesas(frame):
            
             
             query = f'''
-                        SELECT DISTINCT 
-                            COALESCE (remesas_guias.guia_id, '' ) AS 'Guia',
-                            COALESCE (anexos_guias.unds, '1') AS 'Cant' ,
-                            COALESCE (anexos_guias.peso, '1') AS 'Kg',
-                            COALESCE (anexos_guias.destino, '') AS 'Destino',
-                            COALESCE (guias.fecha_de_asignacion, '') AS 'Fe. Recep',
-                            COALESCE (anexos_guias.valor, '' ) AS 'Valor',
-                            COALESCE ((guias.balance_FCE + guias.balance_RCE), '') as 'Cobro',
-                            COALESCE (anexos_guias.anexo_id, '') AS 'Anexo',
-                            COALESCE (facturas_guias.factura_id, '') AS 'Factura'
-
-                            FROM remesas_guias
-                            LEFT JOIN facturas_guias ON remesas_guias.guia_id = facturas_guias.guia_id
-                            JOIN remesas ON remesas.id_remesa = remesas_guias.remesa_id
-                            LEFT JOIN anexos_guias ON anexos_guias.guia_id = facturas_guias.guia_id
-                            LEFT JOIN guias on guias.numero_guia = remesas_guias.guia_id
+                        SELECT 
+                            Guia,
+                            Cant,
+                            Kg,
+                            Destino,
+                            [Fe. Recep],
+                            Valor,
+                            Cobro,
+                            Anexo,
+                            Factura
+                        FROM (
+                            SELECT 
+                                COALESCE(remesas_guias.guia_id, '') AS 'Guia',
+                                COALESCE(guias.unidades, '0') AS 'Cant',
+                                COALESCE(guias.peso_Kg, '0') AS 'Kg',
+                                COALESCE(guias.destino, 'SIN GUIA') AS 'Destino',
+                                COALESCE(guias.fecha_de_asignacion, '') AS 'Fe. Recep',
+                                COALESCE(anexos_guias.valor, '') AS 'Valor',
+                                COALESCE((guias.balance_FCE + guias.balance_RCE), '0') AS 'Cobro',
+                                COALESCE(anexos_guias.anexo_id, '') AS 'Anexo',
+                                COALESCE(facturas_guias.factura_id, '') AS 'Factura',
+                                ROW_NUMBER() OVER (PARTITION BY remesas_guias.guia_id ORDER BY remesas_guias.guia_id) AS RowNum
+                            FROM 
+                                remesas_guias
+                            LEFT JOIN 
+                                anexos_guias ON anexos_guias.guia_id = remesas_guias.guia_id
+                            LEFT JOIN 
+                                guias ON remesas_guias.guia_id = guias.numero_guia
+                            LEFT JOIN 
+                                facturas_guias ON guias.numero_guia = facturas_guias.guia_id
                             WHERE remesas_guias.remesa_id = '{id_remesa}'
-                            ORDER BY facturas_guias.guia_id ASC            
+                        ) AS Subquery
+                        WHERE RowNum = 1;
+
                       '''
             result = connection.execute(query)
             data = result.fetchall()
             if not data:
                 messagebox.showerror("", "No se encontraron guias")
                 return
-            file_location = "D:/intermodal/control/facturas"
+            # file_location = os.path.join(os.path.dirname(os.path.abspath(__file__)), "remesas")
+            file_location = 'D:/intermodal/control/remesas'
             file_name = f"{id_remesa}.xlsx"
             file_path = os.path.join(file_location, file_name)
+            if not os.path.exists(file_location):
+                os.makedirs(file_location)
             
             if file_path:
                 df = pd.DataFrame(data, columns=["Guia", "Cant", "Kg", "Destino", "Fe. Recep", "Valor", "Cobro", "Anexo", "Factura"])
                 df.insert(0, "No", range(1, len(df) + 1))
                 df['Cant'] = df['Cant'].astype(int)
                 df['Kg'] = df['Kg'].astype(int)
+                # df['Valor'] = df['Valor'].astype(float)
+                # df['Cobro'] = df['Cobro'].astype(float)
                 with ExcelWriter(file_path, engine='xlsxwriter') as writer:
                     df.to_excel(writer, sheet_name='Hoja1', index=False, startrow=2)
-                
+      
                     worksheet = writer.sheets['Hoja1']
                     worksheet.merge_range('A1:J1', f'RELACION REMISIONES ENTREGADAS AL CONDUCTOR.', writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center', 'border':1, 'bg_color': '#ADD8E6'})) #type: ignore
-                    worksheet.merge_range('A2:D2', f'Conductor: {conductor}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
+                    worksheet.merge_range('A2:D2', f'COND: {conductor}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
                     
                     worksheet.write('E2:E2', f'{remesa}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
                     
@@ -1215,35 +1242,30 @@ def show_remesas(frame):
                     worksheet.set_column('F:F', 9, writer.book.add_format({'align': 'center', 'font_size': 9})) # type: ignore
                     worksheet.set_column('G:H', 10, writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0', 'font_size': 9})) # type: ignore                    
                     worksheet.set_column('I:J', 7, writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0', 'font_size': 9})) # type: ignore
-                    total_cant = df['Cant'].sum()
-                    total_kg = df['Kg'].sum()
-                    total_valor = df['Valor'].sum()
-                    total_cobro = df['Cobro'].sum()
+
                     worksheet.write(len(df) + 3, 1, 'TOTAL', writer.book.add_format({'bold': True, 'align': 'center', 'border':1})) #type: ignore
                     
-                    worksheet.write(len(df) + 3, 2, total_cant, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '0'})) #type: ignore
+                    worksheet.write(len(df) + 3, 2, total_uds, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '0'})) #type: ignore
                     worksheet.write(len(df) + 3, 3, total_kg, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '0'})) #type: ignore
-                    worksheet.write(len(df) + 3, 6, total_valor, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '"$"#,##0'})) #type: ignore
-                    worksheet.write(len(df) + 3, 7, total_cobro, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '"$"#,##0'})) #type: ignore
+                    worksheet.write(len(df) + 3, 6, ingreso_operativo_total, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '"$"#,##0'})) #type: ignore
+                    worksheet.write(len(df) + 3, 7, cobro_total, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '"$"#,##0'})) #type: ignore
                     
                     num_rows_anexo = len(df)                
-                    cell_range_anexo = f'A3:J{num_rows_anexo+3}'
+                    cell_range_anexo = f'A3:J{num_rows_anexo+4}'
                     worksheet.conditional_format(cell_range_anexo, {'type': 'no_blanks', 'format': writer.book.add_format({'border': 1})}) #type: ignore
+                    worksheet.conditional_format(cell_range_anexo, {'type': 'blanks', 'format': writer.book.add_format({'border': 1})}) #type: ignore
                                         
-                if os.path.exists(file_path):
-                    file_name, file_extension = os.path.splitext(file_path)
-                    file_number = 1
+            if os.path.exists(file_path):
+                file_name, file_extension = os.path.splitext(file_path)
+                file_number = 1
+                new_file = f"{file_name}_{file_number}{file_extension}"
+                while os.path.exists(new_file):
+                    file_number += 1
                     new_file = f"{file_name}_{file_number}{file_extension}"
-                    while os.path.exists(new_file):
-                        file_number += 1
-                        new_file = f"{file_name}_{file_number}{file_extension}"
-                    file = new_file
-                    os.rename(file_path, new_file)  
-                    os.startfile(file)
-                    
-            
-            messagebox.showinfo("", "Remesa exportada con éxito")
-            # os.startfile("remesa.xlsx")
+                file = new_file
+                os.rename(file_path, new_file)                  
+                os.startfile(file)            
+                messagebox.showinfo("", "Remesa exportada con éxito")
             
         except Exception as e:
             messagebox.showerror("", f"Error al exportar la remesa: {str(e)}")  
@@ -1252,11 +1274,7 @@ def show_remesas(frame):
     #********** TABLE LIST  REMESAS **********#
     frame_search_remesa = ttk.Frame(frame,)
     frame_search_remesa.grid(row=0, column=0, columnspan=2, padx=10, sticky="wens" )
- 
-    # for i in range(10):
-    #     frame_search_remesa.grid_columnconfigure(i, weight=1)
-    # for i in range(10):
-    #     frame_search_remesa.grid_rowconfigure(i, weight=1)
+
     
     entry_cols = ("id_remesa", "manifiesto", "destino", "conductor", "fecha", "ingreso_operativo_total", "rentabilidad", "total_guias", "guias_facturadas", "guias_sin_facturar")
     table_list_remesas = ttk.Treeview(frame_search_remesa, columns= entry_cols, show="headings", height=8)
