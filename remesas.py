@@ -1165,7 +1165,7 @@ def show_remesas(frame):
                 messagebox.showerror("", "No se encontró la remesa")
                 return
            
-            
+
             query = f'''
                         SELECT 
                             Guia,
@@ -1184,7 +1184,7 @@ def show_remesas(frame):
                                 COALESCE(guias.peso_Kg, '0') AS 'Kg',
                                 COALESCE(guias.destino, 'SIN GUIA') AS 'Destino',
                                 COALESCE(guias.fecha_de_asignacion, '') AS 'Fe. Recep',
-                                COALESCE(anexos_guias.valor, '') AS 'Valor',
+                                COALESCE(anexos_guias.valor, '0') AS 'Valor',
                                 COALESCE((guias.balance_FCE + guias.balance_RCE), '0') AS 'Cobro',
                                 COALESCE(anexos_guias.anexo_id, '') AS 'Anexo',
                                 COALESCE(facturas_guias.factura_id, '') AS 'Factura',
@@ -1214,46 +1214,50 @@ def show_remesas(frame):
             if not os.path.exists(file_location):
                 os.makedirs(file_location)
             
-            if file_path:
-                df = pd.DataFrame(data, columns=["Guia", "Cant", "Kg", "Destino", "Fe. Recep", "Valor", "Cobro", "Anexo", "Factura"])
-                df.insert(0, "No", range(1, len(df) + 1))
-                df['Cant'] = df['Cant'].astype(int)
-                df['Kg'] = df['Kg'].astype(int)
-                # df['Valor'] = df['Valor'].astype(float)
-                # df['Cobro'] = df['Cobro'].astype(float)
-                with ExcelWriter(file_path, engine='xlsxwriter') as writer:
-                    df.to_excel(writer, sheet_name='Hoja1', index=False, startrow=2)
-      
-                    worksheet = writer.sheets['Hoja1']
-                    worksheet.merge_range('A1:J1', f'RELACION REMISIONES ENTREGADAS AL CONDUCTOR.', writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center', 'border':1, 'bg_color': '#ADD8E6'})) #type: ignore
-                    worksheet.merge_range('A2:D2', f'COND: {conductor}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
-                    
-                    worksheet.write('E2:E2', f'{remesa}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
-                    
-                    worksheet.merge_range('F2:G2', f'{manifiesto}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
-                    worksheet.write('H2:H2', 'Fecha', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
-                    worksheet.merge_range('I2:J2', f'{fecha}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
-                    
-                    worksheet.set_column('A:A', 3, writer.book.add_format({'align': 'center', 'font_size': 9})) # type: ignore
-                    worksheet.set_column('B:B', 10, writer.book.add_format({'align': 'center', 'font_size': 9})) # type: ignore
-                    worksheet.set_column('C:C', 5, writer.book.add_format({'align': 'center', 'font_size': 9, 'num_format': '0'})) # type: ignore
-                    worksheet.set_column('D:D', 5, writer.book.add_format({'align': 'center', 'font_size': 9, 'num_format': '0'})) # type: ignore
-                    worksheet.set_column('E:E', 15, writer.book.add_format({'align': 'center', 'font_size': 9})) # type: ignore
-                    worksheet.set_column('F:F', 9, writer.book.add_format({'align': 'center', 'font_size': 9})) # type: ignore
-                    worksheet.set_column('G:H', 10, writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0', 'font_size': 9})) # type: ignore                    
-                    worksheet.set_column('I:J', 7, writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0', 'font_size': 9})) # type: ignore
+            df = pd.DataFrame(data, columns=["Guia", "Cant", "Kg", "Destino", "Fe. Recep", "Valor", "Cobro", "Anexo", "Factura"])
+            df.insert(0, "No", range(1, len(df) + 1))
+            df['Cant'] = df['Cant'].astype(int)
+            df['Kg'] = df['Kg'].astype(int)
+            df['Valor'] = df['Valor'].astype(int)
+            df['Cobro'] = df['Cobro'].astype(int)
+            with ExcelWriter(file_path, engine='xlsxwriter') as writer:
+                df.to_excel(writer, sheet_name='Hoja1', index=False, startrow=2)
+    
+                worksheet = writer.sheets['Hoja1']
+                worksheet.merge_range('A1:J1', f'RELACION REMISIONES ENTREGADAS AL CONDUCTOR.', writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center', 'border':1, 'bg_color': '#ADD8E6'})) #type: ignore
+                worksheet.merge_range('A2:D2', f'COND: {conductor}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
+                
+                worksheet.write('E2:E2', f'{remesa}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
+                
+                worksheet.merge_range('F2:G2', f'{manifiesto}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
+                worksheet.write('H2:H2', 'Fecha', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
+                worksheet.merge_range('I2:J2', f'{fecha}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
+                
+                worksheet.set_column('A:A', 3, writer.book.add_format({'align': 'center', 'font_size': 9})) # type: ignore
+                worksheet.set_column('B:B', 10, writer.book.add_format({'align': 'center', 'font_size': 9})) # type: ignore
+                worksheet.set_column('C:C', 5, writer.book.add_format({'align': 'center', 'font_size': 9, 'num_format': '0'})) # type: ignore
+                worksheet.set_column('D:D', 5, writer.book.add_format({'align': 'center', 'font_size': 9, 'num_format': '0'})) # type: ignore
+                worksheet.set_column('E:E', 15, writer.book.add_format({'align': 'center', 'font_size': 9})) # type: ignore
+                worksheet.set_column('F:F', 9, writer.book.add_format({'align': 'center', 'font_size': 9})) # type: ignore
+                worksheet.set_column('G:H', 10, writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0', 'font_size': 9})) # type: ignore                    
+                worksheet.set_column('I:J', 7, writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0', 'font_size': 9})) # type: ignore
+                
 
-                    worksheet.write(len(df) + 3, 1, 'TOTAL', writer.book.add_format({'bold': True, 'align': 'center', 'border':1})) #type: ignore
-                    
-                    worksheet.write(len(df) + 3, 2, total_uds, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '0'})) #type: ignore
-                    worksheet.write(len(df) + 3, 3, total_kg, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '0'})) #type: ignore
-                    worksheet.write(len(df) + 3, 6, ingreso_operativo_total, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '"$"#,##0'})) #type: ignore
-                    worksheet.write(len(df) + 3, 7, cobro_total, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '"$"#,##0'})) #type: ignore
-                    
-                    num_rows_anexo = len(df)                
-                    cell_range_anexo = f'A3:J{num_rows_anexo+4}'
-                    worksheet.conditional_format(cell_range_anexo, {'type': 'no_blanks', 'format': writer.book.add_format({'border': 1})}) #type: ignore
-                    worksheet.conditional_format(cell_range_anexo, {'type': 'blanks', 'format': writer.book.add_format({'border': 1})}) #type: ignore
+                total_uds = df['Cant'].sum()
+                total_kg = df['Kg'].sum()
+                total_valor = df['Valor'].sum()
+                cobro_total = df['Cobro'].sum()
+
+                worksheet.write(len(df) + 3, 1, 'TOTAL', writer.book.add_format({'bold': True, 'align': 'center', 'border':1})) #type: ignore
+                worksheet.write(len(df) + 3, 2, total_uds, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '0'})) #type: ignore
+                worksheet.write(len(df) + 3, 3, total_kg, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '0'})) #type: ignore
+                worksheet.write(len(df) + 3, 6, total_valor, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '"$"#,##0'})) #type: ignore
+                worksheet.write(len(df) + 3, 7, cobro_total, writer.book.add_format({'bold': True, 'align': 'center', 'border':1, 'num_format': '"$"#,##0'})) #type: ignore
+                
+                num_rows_anexo = len(df)                
+                cell_range_anexo = f'A3:J{num_rows_anexo+4}'
+                worksheet.conditional_format(cell_range_anexo, {'type': 'no_blanks', 'format': writer.book.add_format({'border': 1})}) #type: ignore
+                worksheet.conditional_format(cell_range_anexo, {'type': 'blanks', 'format': writer.book.add_format({'border': 1})}) #type: ignore
                                         
             if os.path.exists(file_path):
                 file_name, file_extension = os.path.splitext(file_path)
@@ -1422,9 +1426,9 @@ def show_remesas(frame):
     
     tabs_remesas.add(frame_search_remesa, text="Buscar Remesa")
     entry_export_remesa_factura = ttk.Entry(frame_search_single_remesa)
-    entry_export_remesa_factura.grid(row=1, column=6, padx=5, )
+    entry_export_remesa_factura.grid(row=1, column=6, padx=5,pady=5, )
     btn_export_remesa_factura = ttk.Button(frame_search_single_remesa, text="Exportar Remesa", command= lambda: export_remesa_to_factura(entry_export_remesa_factura.get().strip()) )
-    btn_export_remesa_factura.grid(row=1, column=5, padx=(150,5), )
+    btn_export_remesa_factura.grid(row=1, column=5, padx=(150,5), pady=5)
     
     list_remesas()
     

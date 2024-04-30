@@ -119,9 +119,9 @@ def import_remesa_from_excel():
         except Exception as e:
             connection.rollback()
             if 'UNIQUE' in str(e):
-                messagebox.showerror("", f"La remesa {id_remesa} ya existe")
+                messagebox.showerror("Error", f"La remesa {id_remesa} ya existe")
             else:
-                messagebox.showerror("", "Ocurrió un error al guardar la remesa")
+                messagebox.showerror("Error", f"Ocurrió un error al guardar la remesa: {str(e)}")
         connection.close()
 
 root = tk.Tk()

@@ -100,13 +100,11 @@ def show_facturacion(frame):
             result = connection.execute(query_show_detail).fetchall()
             if not result:
                 raise Exception(id_anexo)
-            query_summary_anexo = f'''  SELECT DISTINCT facturas_guias.factura_id 
+            query_summary_anexo = f'''  SELECT DISTINCT factura_id
                                         FROM facturas_guias
-                                        JOIN anexos_guias ON facturas_guias.guia_id = anexos_guias.guia_id
-                                        WHERE anexos_guias.anexo_id = '{id_anexo}';            
+                                        WHERE facturas_guias.anexo_id = '{id_anexo}';            
                                     '''
             result_summary = connection.execute(query_summary_anexo).fetchall()
-            
             if result_summary:
                 messagebox.showwarning("", f"El anexo {id_anexo} ya ha sido agregado a la factura {result_summary[0][0]}")
                 return            
