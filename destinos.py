@@ -2,7 +2,11 @@ import pandas as pd
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import sqlite3
-import config
+from config import config
+from config import load_config
+
+
+db_path = config['db_path'] 
 
 
 def show_destinos(frame):
@@ -11,7 +15,7 @@ def show_destinos(frame):
 
     def print_destinos():
         # Connect to the SQLite database
-        conn = sqlite3.connect(config.db_path)
+        conn = sqlite3.connect(db_path)
         # Execute the query to fetch the destinations
         query = "SELECT * FROM destinos ORDER BY destino ASC"
         df = pd.read_sql_query(query, conn)
@@ -32,7 +36,7 @@ def show_destinos(frame):
         # valor_3 = entry_valor_3.get()
         
         # Connect to the SQLite database
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         # Execute the query to insert the new destination
         query = f"INSERT INTO destinos (destino, valor_destino_1) VALUES ('{destino}', '{valor_1}' )"
         connection.execute(query)
@@ -62,7 +66,7 @@ def show_destinos(frame):
         
         # print(destino)
         # Connect to the SQLite database
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         # Execute the query to delete the destination
         query = f"DELETE FROM destinos WHERE destino = ?"
         result = connection.execute(query, (destino,))
@@ -78,7 +82,7 @@ def show_destinos(frame):
             messagebox.showerror("Error", "Ingrese un destino para buscar")
             return
         # Connect to the SQLite database
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         try:            
             connection = connection.cursor()
             # Execute the query to search the destination
@@ -106,7 +110,7 @@ def show_destinos(frame):
         # Get the values from the entry widgets
         destino = entry_destino.get().upper()
         valor_destino = int(entry_valor_destino.get())
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         try:
             cursor = connection.cursor()
             query = '''UPDATE destinos

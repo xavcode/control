@@ -5,11 +5,12 @@ import tkinter as tk
 import PyPDF2
 import re
 import sqlite3
-
+from config import config, load_config
 from tkinter import *
 from tkinter import ttk, filedialog, messagebox
 
-import config
+load_config()
+db_path = config['db_path'] 
 
 def _convert_stringval(value):
     if hasattr(value, 'typename'):
@@ -170,7 +171,7 @@ def show_anexos(frame):
 
         #insert anexo into the database
         try:
-            connection = sqlite3.connect(config.db_path)
+            connection = sqlite3.connect(db_path)
             query = f"INSERT INTO anexos (id_anexo, fecha_anexo, total_unidades, total_guias, fte_total) VALUES ('{id_anexo}', '{fecha}', '{(int(total_unidades))}', '{int(total_guias)}', '{(fte_total)}');"
             result = connection.execute(query)
             connection.commit()
@@ -207,7 +208,7 @@ def show_anexos(frame):
         confirmed = messagebox.askyesno("Confirmar", f"¿Desea borrar el anexo {id_anexo_delete} ?")
         if not confirmed:
             return
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         
          # Primera consulta para eliminar de la tabla anexos_guias
         try:
@@ -330,7 +331,7 @@ def show_anexos(frame):
     def get_anexos():
         clean_anexos()
         tree_search.delete(*tree_search.get_children())
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         # Execute the query to search for the anexo
         query = f"SELECT id_anexo, fecha_anexo, total_unidades, total_guias, fte_total FROM anexos ORDER BY id_anexo DESC;"
         result = connection.execute(query).fetchall()
@@ -351,7 +352,7 @@ def show_anexos(frame):
     def get_detail_anexo(id_anexo):
         clean_detail()
         clean_anexo_summary()
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         #get the remesas and details of the anexo
         try:            
             query_show_detail = f'''SELECT DISTINCT

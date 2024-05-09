@@ -11,12 +11,14 @@ from tkinter import *
 from tkinter import ttk, filedialog, messagebox
 from tkcalendar import DateEntry
 
-import config
+from config import config, load_config
 import pandas as pd
 import os
 import pandas as pd
 import os
 import xlsxwriter
+
+db_path = config['db_path'] 
 
 def _convert_stringval(value):
     if hasattr(value, 'typename'):
@@ -66,7 +68,7 @@ def show_facturacion(frame):
             messagebox.showerror("", "El anexo ya ha sido agregado")
             return
         
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         try:            
             query_show_detail = f'''SELECT 
                                         remesa_id, 
@@ -182,7 +184,7 @@ def show_facturacion(frame):
                 entry_borrar_anexo.insert(0, values[0])
     
     def get_latest_factura():
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         try:
             query_get_list_anexos = f"SELECT id_anexo FROM anexos ORDER BY id_anexo DESC;"
         except Exception as e:
@@ -190,7 +192,7 @@ def show_facturacion(frame):
         connection.close()
            
     def get_list_anexos():
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         cursor = connection.cursor()
         cursor.execute("SELECT DISTINCT anexo_id FROM anexos_guias")
         result = cursor.fetchall()
@@ -204,7 +206,7 @@ def show_facturacion(frame):
             return
         fecha_factura = date_entry_factura.get()
    
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         try:
             query_insert_factura = f'''
                                     INSERT INTO facturas (
@@ -341,7 +343,7 @@ def show_facturacion(frame):
             messagebox.showerror("", "Por favor ingrese una factura")
             return
         
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         try:
             query_search_factura = f'''
                                         SELECT
@@ -373,7 +375,7 @@ def show_facturacion(frame):
         connection.close()
     
     def get_anexos_in_factura(factura):
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         try:
             query_get_anexos_from_factura = f'''
                                     SELECT facturas_guias.anexo_id, COUNT(facturas_guias.anexo_id), SUM(facturas_guias.valor)   
@@ -400,7 +402,7 @@ def show_facturacion(frame):
         
         
         try:
-            connection = sqlite3.connect(config.db_path)
+            connection = sqlite3.connect(db_path)
             cursor = connection.cursor()
             
             query_update_factura = f'''
@@ -571,7 +573,7 @@ def show_facturacion(frame):
     #***********************************TAB-SEARCH-REMESAS*************************************************************
     
     def get_facturas():
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         try:
             query_get_facturas = f'''SELECT * FROM facturas;'''
             result = connection.execute(query_get_facturas).fetchall()
@@ -594,7 +596,7 @@ def show_facturacion(frame):
         if factura_found:
             confirm = messagebox.askyesno("Confirmar", f"¿Estás seguro de que quieres eliminar la factura {factura_id}?")
             if confirm:
-                connection = sqlite3.connect(config.db_path)
+                connection = sqlite3.connect(db_path)
                 treeview_facturas.delete(item)
                 try:
                     query_delete_factura = f'''DELETE FROM facturas WHERE id_factura = '{factura_id}';'''
@@ -619,7 +621,7 @@ def show_facturacion(frame):
         for item in treeview_facturas_detail.get_children():
             treeview_facturas_detail.delete(item)
         
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         try:
             query_get_facturas_detail = f'''
                     SELECT 

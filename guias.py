@@ -4,7 +4,9 @@ from tkinter import filedialog, messagebox, ttk
 import pandas as pd
 import sqlite3
 from sqlite3 import IntegrityError
-import config
+from config import config, load_config
+
+db_path = config['db_path'] 
 
 # define ui guias module
 def show_guias(frame):
@@ -25,7 +27,7 @@ def show_guias(frame):
         df.head()
 
         # Create a connection to the database
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         df.columns = ["estado","numero_guia","fecha_de_asignacion","remitente","destino","destinatario","direccion_de_entrega","fecha_maxima_de_entrega","unidades","peso_Kg","volumen_m3","valor_declarado_(COP)","fecha_entrega_reexpedidor","hora_entrega_reexpedidor","ultima_causal","fecha_ultima_causal","balance_RCE","balance_FCE","fd","rd","ruta","telefono"]
         
         df_list = df.values.tolist()
@@ -49,7 +51,7 @@ def show_guias(frame):
             messagebox.showerror("Error", "Ingrese un número de guía")
             return
         try:   
-            connection = sqlite3.connect(config.db_path)
+            connection = sqlite3.connect(db_path)
             # Execute a SQL query to search for the guia number
             query = f'''
                         SELECT DISTINCT guias.estado, guias.numero_guia, guias.fecha_de_asignacion, guias.remitente, guias.destino, 
