@@ -5,6 +5,8 @@ import tkinter as tk
 import sqlite3
 
 import config
+import colors
+
 import pandas as pd
 from pandas import ExcelWriter
 
@@ -33,48 +35,6 @@ ttk._convert_stringval = _convert_stringval # type: ignore
 def show_remesas(frame):
     for widget in frame.winfo_children():
         widget.grid_forget()
-     
-    # def edit_cell(event):
-    #     # Get the selected item and column
-    #     item = table_add_guia.selection()[0]
-    #     column = table_add_guia.identify_column(event.x)
-
-    #     # Get the current value of the cell
-    #     current_value = table_add_guia.set(item, column)
-
-    #     # Create an Entry widget to edit the cell
-    #     entry = ttk.Entry(table_add_guia)
-    #     entry.insert(0, current_value)
-
-    #     # Place the Entry widget over the cell
-    #     bbox = table_add_guia.bbox(item, column)
-    #     entry.place(x=bbox[0], y=bbox[1], width=bbox[2]-bbox[0], height=bbox[3]-bbox[1])
-    #     entry.focus_set()
-
-    #     def save_edit():
-    #         # Get the new value from the Entry widget
-    #         new_value = entry.get()
-
-    #         # Update the cell value in the Treeview
-    #         table_add_guia.set(item, column, new_value)
-
-    #         # Destroy the Entry widget
-    #         entry.destroy()
-
-    #     def cancel_edit():
-    #         # Destroy the Entry widget
-    #         entry.destroy()
-
-    #     # Bind the Return key to save the edit
-    #     entry.bind("<Return>", lambda event: save_edit())
-
-    #     # Bind the Escape key to cancel the edit
-    #     entry.bind("<Escape>", lambda event: cancel_edit())
-
-    # # Bind the Double-Button-1 event to the edit_cell function
-    # table_add_guia.bind("<Double-Button-1>", edit_cell)
-     
-
     def calc_total():
         total_unidades = 0
         total_kilos = 0
@@ -622,7 +582,7 @@ def show_remesas(frame):
                 destino = cbbx_destino_remesa.get()
                 
                 
-                worksheet.merge_range('A1:J1', 'RELACION REMISIONES ENTREGADAS AL CONDUCTOR - COORDINADORA', writer.book.add_format({'align': 'center', 'bg_color': '#B8CCE4', 'border': 1, 'bold': True})) # type: ignore
+                worksheet.merge_range('A1:J1', 'RELACION REMISIONES ENTREGADAS AL CONDUCTOR - COORDINADORA', writer.book.add_format({'align': 'center', 'bg_color': colors.bg_relaciones_conductor, 'border': 1, 'bold': True})) # type: ignore
                 
                 worksheet.merge_range('A2:B2', 'CONDUCTOR:', writer.book.add_format({'align': 'center', 'border': 1, 'bold': True})) # type: ignore
                 
@@ -648,7 +608,7 @@ def show_remesas(frame):
                 worksheet.set_column('J:J', 12, cell_format=writer.book.add_format({'align': 'center'})) # type: ignore
                 
                 # Add an empty row
-                worksheet.write_blank(df_remesa.shape[0] + 3, 0, None)                
+                worksheet.write_blank(df_remesa.shape[0] + 3, 0, None)         
                 # Write the total_cobro with a text at the beginning
                 worksheet.merge_range(df_remesa.shape[0] + 4, 0, df_remesa.shape[0] + 4, 4, "INGRESO FTE TOTAL:", writer.book.add_format({'align': 'left', 'border': '1', 'bold':True })) # type: ignore
                 worksheet.write(df_remesa.shape[0] + 4, 5, int(entry_ingreso_operativo_total.get()), writer.book.add_format({'align': 'center', 'num_format': '"$"#,##0',  'border': '1', 'bold':True})) #type: ignore
@@ -912,7 +872,7 @@ def show_remesas(frame):
     table_add_guia.configure(yscrollcommand=scrollbar.set)
     
     # if the balance is != 0, the row will be colored in yellow
-    table_add_guia.tag_configure("has_cobro", background="#fefda6")  
+    table_add_guia.tag_configure("has_cobro", background=colors.bg_has_cobro)  
 
     # table_add_guia.column("#0", width=0, stretch=False, anchor="center")
     table_add_guia.column("numero_guia", width=120, stretch=False, anchor="center")
@@ -1026,60 +986,68 @@ def show_remesas(frame):
         id_remesa = event.widget.item(item)['values'][0]
         entrysearch_remesa.delete(0, tk.END)
         entrysearch_remesa.insert(0, id_remesa)
+        entry_export_remesa_factura.delete(0, tk.END)
+        entry_export_remesa_factura.insert(0, id_remesa)
         search_remesa(id_remesa)
         search_guias_remesa(id_remesa)
     def search_guias_remesa(id_remesa):
-        connection = sqlite3.connect(config.db_path)
-        query = f'''
-                    SELECT DISTINCT
-                        remesas_guias.guia_id, 
-                        COALESCE ( guias.estado, 'SIN GUIA') AS estado,
-                        COALESCE (guias.destinatario, 'SIN GUIA' ) AS destinatario,
-                        COALESCE (guias.destino, 'SIN GUIA' ) AS destino,
-                        COALESCE (guias.unidades, 'SIN GUIA') AS unidades,
-                        COALESCE (guias.peso_Kg, 'SIN GUIA') AS peso_Kg,
-                        COALESCE (guias.volumen_m3, 'SIN GUIA') AS volumen_m3,
-                        COALESCE (remesas_guias.valor, 'SIN GUIA') AS valor,
-                        COALESCE (guias.fecha_de_asignacion, 'SIN GUIA') AS fecha_de_asignacion,
-                        COALESCE(anexos_guias.anexo_id, 'SIN ANEXO') AS en_anexo,
-                        COALESCE(facturas_guias.factura_id, 'SIN FACT.') AS en_factura
-                    FROM 
-                        remesas_guias
-                    LEFT JOIN 
-                        guias ON remesas_guias.guia_id = guias.numero_guia
-                    LEFT JOIN 
-                        anexos_guias ON guias.numero_guia = anexos_guias.guia_id
-                    LEFT JOIN 
-                        facturas_guias ON guias.numero_guia = facturas_guias.guia_id
-                    WHERE 
-                        remesas_guias.remesa_id = '{id_remesa}'
-                    ORDER BY 
-                        guias.numero_guia;                          
-                    '''
-        result = connection.execute(query)
-        data = result.fetchall()
-        table_list_guias.delete(*table_list_guias.get_children())      
-        connection.close()       
-        for row in data:                       
+        if not id_remesa:
+            messagebox.showerror("", "Ingrese un número de remesa")
+            return
+        try:
+            connection = sqlite3.connect(config.db_path)
+            query = f'''
+                        SELECT DISTINCT
+                            remesas_guias.guia_id, 
+                            COALESCE ( guias.estado, 'SIN GUIA') AS estado,
+                            COALESCE (guias.destinatario, 'SIN GUIA' ) AS destinatario,
+                            COALESCE (guias.destino, 'SIN GUIA' ) AS destino,
+                            COALESCE (guias.unidades, 'SIN GUIA') AS unidades,
+                            COALESCE (guias.peso_Kg, 'SIN GUIA') AS peso_Kg,
+                            COALESCE (guias.volumen_m3, 'SIN GUIA') AS volumen_m3,
+                            COALESCE (remesas_guias.valor, 'SIN GUIA') AS valor,
+                            COALESCE (guias.fecha_de_asignacion, 'SIN GUIA') AS fecha_de_asignacion,
+                            COALESCE(anexos_guias.anexo_id, 'SIN ANEXO') AS en_anexo,
+                            COALESCE(facturas_guias.factura_id, 'SIN FACT.') AS en_factura
+                        FROM 
+                            remesas_guias
+                        LEFT JOIN 
+                            guias ON remesas_guias.guia_id = guias.numero_guia
+                        LEFT JOIN 
+                            anexos_guias ON guias.numero_guia = anexos_guias.guia_id
+                        LEFT JOIN 
+                            facturas_guias ON guias.numero_guia = facturas_guias.guia_id
+                        WHERE 
+                            remesas_guias.remesa_id = '{id_remesa}'
+                        ORDER BY 
+                            guias.numero_guia;                          
+                        '''
+            result = connection.execute(query)
+            if result is None:
+                messagebox.showerror("", "No se encontraron guias")
+                return            
+            data = result.fetchall()
+            table_list_remesas.focus_set()
             
-            if row[10] != 'SIN FACT.':
-                table_list_guias.insert("", "end", values=row, tags=("paid_invoice",))
-            else: 
-                table_list_guias.insert("", "end", values=row, tags=("pend_invoice",) )        
+                     
+            table_list_guias.delete(*table_list_guias.get_children())      
+            connection.close()       
+            for row in data:                         
+                if row[10] != 'SIN FACT.':
+                    table_list_guias.insert("", "end", values=row, tags=("paid_invoice",))
+                else: 
+                    table_list_guias.insert("", "end", values=row, tags=("pend_invoice",) )   
+            connection.close()
+        except Exception as e:
+            messagebox.showerror("", f"Error al buscar la remesa: {str(e)}")
+        finally:
+            connection.close()
+                
+             
     def btnsearch_remesa(id_remesa):        
         if id_remesa:
-            found = False
-            for item in table_list_remesas.get_children():
-                if table_list_remesas.item(item, "values")[0] == id_remesa:
-                    table_list_remesas.selection_set(item)
-                    found = True
-                    break
-            
-            if not found:
-                messagebox.showinfo("Información", "No se encontró la remesa")
-            else:
-                search_remesa(id_remesa)
-                search_guias_remesa(id_remesa)
+            search_remesa(id_remesa)
+            search_guias_remesa(id_remesa)               
         else:
             messagebox.showerror("Error", "Por favor, ingrese un ID de remesa")    
     def search_remesa(id_remesa):  
@@ -1132,6 +1100,12 @@ def show_remesas(frame):
         entryutilidad.insert(0, data[0][11])
         entryrentabilidad.insert(0,str(data[0][12]))
         entries_state_disabled()
+        
+        for item in table_list_remesas.get_children():
+                if  table_list_remesas.item(item, "values")[0] == id_remesa:
+                    table_list_remesas.selection_set(item)
+                    
+                    table_list_remesas.see(item)
     
     def export_remesa_to_factura(id_remesa):
         remesa, manifiesto, conductor, fecha = '', '', '', ''
@@ -1224,7 +1198,7 @@ def show_remesas(frame):
                 df.to_excel(writer, sheet_name='Hoja1', index=False, startrow=2)
     
                 worksheet = writer.sheets['Hoja1']
-                worksheet.merge_range('A1:J1', f'RELACION REMISIONES ENTREGADAS AL CONDUCTOR.', writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center', 'border':1, 'bg_color': '#ADD8E6'})) #type: ignore
+                worksheet.merge_range('A1:J1', f'RELACION REMISIONES ENTREGADAS AL CONDUCTOR.', writer.book.add_format({'bold': True, 'font_size': 12, 'align': 'center', 'border':1, 'bg_color': colors.bg_relaciones_conductor})) #type: ignore
                 worksheet.merge_range('A2:D2', f'COND: {conductor}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
                 
                 worksheet.write('E2:E2', f'{remesa}', writer.book.add_format({'bold': True, 'font_size': 11, 'align': 'center', 'border':1 })) #type: ignore
@@ -1256,9 +1230,13 @@ def show_remesas(frame):
                 
                 num_rows_anexo = len(df)                
                 cell_range_anexo = f'A3:J{num_rows_anexo+4}'
+                cell_range_anexo_1 = f'A3:J{num_rows_anexo+3}'
                 worksheet.conditional_format(cell_range_anexo, {'type': 'no_blanks', 'format': writer.book.add_format({'border': 1})}) #type: ignore
                 worksheet.conditional_format(cell_range_anexo, {'type': 'blanks', 'format': writer.book.add_format({'border': 1})}) #type: ignore
-                                        
+                
+                worksheet.conditional_format(cell_range_anexo_1, {'type': 'text', 'criteria': 'containing','value': 'SIN GUIA','format': writer.book.add_format({'bg_color': colors.bg_cell_error})})#type: ignore
+                
+                                                        
             if os.path.exists(file_path):
                 file_name, file_extension = os.path.splitext(file_path)
                 file_number = 1
@@ -1269,7 +1247,7 @@ def show_remesas(frame):
                 file = new_file
                 os.rename(file_path, new_file)                  
                 os.startfile(file)            
-                messagebox.showinfo("", "Remesa exportada con éxito")
+                messagebox.showinfo("", f"Remesa {id_remesa} exportada con éxito")
             
         except Exception as e:
             messagebox.showerror("", f"Error al exportar la remesa: {str(e)}")  
