@@ -8,21 +8,23 @@ import sqlite3
 from config import config, load_config
 
 
-db_path = config['db_path'] 
+db_path = config['db_path']
+pueblos_path = config['pueblos_path'] 
 
-
-# Lee la tabla de Excel
 
 def import_remesa_from_excel():   
+    print(pueblos_path)
+    print(db_path)
     
-    file_path = r"I:\RELACION PUEBLOS 2024.xlsm"
+    file_path = pueblos_path
 
     if not os.path.exists(file_path):
+        print(config['pueblos_path'])
         messagebox.showerror(
-            "", "No se encontró el archivo"
+            "", f"No se encontró el archivo {file_path} "
         )
         return
-    if file_path:        
+    if file_path:
         df = pd.read_excel(
             f"{file_path}", header=None, sheet_name="plantilla_remesa"
         )

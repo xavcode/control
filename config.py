@@ -37,11 +37,17 @@ def show_config(frame):
     
     def save_config():
         parser = configparser.ConfigParser()
-        parser["Config"] = {
+        parser['Config'] = {
             'db_path': config['db_path'],
             'tumaco_path': config['tumaco_path'],
             'pueblos_path': config['pueblos_path']
         }
+        
+        
+        # parser["Config"] = 'db_path': config['db_path'],
+        #     'tumaco_path': config['tumaco_path'],
+        #     'pueblos_path': config['pueblos_path']
+        
         with open(CONFIG_FILE_PATH, "w") as config_file:
             parser.write(config_file)
         os.execl(sys.executable, sys.executable, *sys.argv)
@@ -67,7 +73,7 @@ def show_config(frame):
         global config
         file_path = filedialog.askopenfilename(filetypes=[("", "*.xlsx;*.xls;*.xlsm")])
         if file_path:
-            config['pueblos'] = file_path
+            config['pueblos_path'] = file_path
             entry_pueblos.delete(0, 'end')
             entry_pueblos.insert('end', file_path)
             
@@ -88,7 +94,7 @@ def show_config(frame):
     entry_db.insert('end', config['db_path'])
     
     #clean the entry before insert the new path
-    btn_db = ttk.Button(frame_config, text="Seleccionar", command=lambda: save_pueblos_file()) # type: ignore
+    btn_db = ttk.Button(frame_config, text="Seleccionar", command=lambda: select_db()) # type: ignore
     btn_db.grid(row=1, column=2,  sticky="w", padx=5, pady=5)
     
     #****-------------------------------------------------****#
@@ -119,7 +125,7 @@ def show_config(frame):
     entry_pueblos.grid(row=9, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
     entry_pueblos.insert('end', config['pueblos_path'])
     
-    btn_pueblos = ttk.Button(frame_config, text="Seleccionar", command=lambda: select_db()) # type: ignore
+    btn_pueblos = ttk.Button(frame_config, text="Seleccionar", command=lambda: save_pueblos_file()) # type: ignore
     btn_pueblos.grid(row=9, column=2,  sticky="w", padx=5, pady=5)
     
     btn_save_changes = ttk.Button(frame, text="Guardar Cambios", command=lambda: save_config())
