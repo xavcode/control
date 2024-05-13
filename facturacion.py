@@ -364,6 +364,7 @@ def show_facturacion(frame):
             date_entry_factura.set_date(result[0][2])
             entry_total_factura.insert(0, "{:,}".format(result[0][3])) # type: ignore
             
+            clean_treeview_guias()
             guias = get_facturas_detail(factura)
             for row in guias:
                 treeview_guias.insert("", "end", values=[num] + list(row))
@@ -454,7 +455,7 @@ def show_facturacion(frame):
     Label_Cliente = ttk.Label(frame_date_factura, text='Cliente:')
     Label_Cliente.grid(row=0, column=0, padx=5, pady=5, sticky='w')
     
-    entry_cliente = ttk.Combobox(frame_date_factura, values=["Coordinadora"])
+    entry_cliente = ttk.Combobox(frame_date_factura, values=["Coordinadora", "TCC"])
     entry_cliente.current(0)
     entry_cliente.grid(row=0, column=1, padx=5, pady=5, columnspan=3, sticky='we')
     entry_cliente.state(['readonly'])

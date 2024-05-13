@@ -1043,8 +1043,7 @@ def show_remesas(frame):
             messagebox.showerror("", f"Error al buscar la remesa: {str(e)}")
         finally:
             connection.close()
-                
-             
+                   
     def btnsearch_remesa(id_remesa):        
         if id_remesa:
             search_remesa(id_remesa)
