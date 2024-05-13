@@ -5,21 +5,26 @@ from tkinter import messagebox
 import os
 import sqlite3
 
-import config
+from config import config, load_config
 
-# Lee la tabla de Excel
 
-def import_remesa_from_excel():
-   
+db_path = config['db_path']
+pueblos_path = config['pueblos_path'] 
+
+
+def import_remesa_from_excel():   
+    print(pueblos_path)
+    print(db_path)
     
-    file_path = r"I:\RELACION PUEBLOS 2024.xlsm"
+    file_path = pueblos_path
 
     if not os.path.exists(file_path):
+        print(config['pueblos_path'])
         messagebox.showerror(
-            "", "No se encontró el archivo"
+            "", f"No se encontró el archivo {file_path} "
         )
         return
-    if file_path:        
+    if file_path:
         df = pd.read_excel(
             f"{file_path}", header=None, sheet_name="plantilla_remesa"
         )
@@ -87,7 +92,7 @@ def import_remesa_from_excel():
         guias = [row[1:] for row in guias]
         # print(guias)
         
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         
         cursor = connection.cursor()
         try:            

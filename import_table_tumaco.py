@@ -5,12 +5,13 @@ from tkinter import messagebox
 import os
 import sqlite3
 
-import config
+from config import config, load_config
 
-# Lee la tabla de Excel
+db_path = config['db_path'] 
+tumacho_path = config['tumaco_path']
 
 def import_remesa_from_excel():
-    file_path = r"I:\RELACION TUMACO 2024.xlsm"
+    file_path = tumacho_path
 
     if not os.path.exists(file_path):
         messagebox.showerror(
@@ -80,7 +81,7 @@ def import_remesa_from_excel():
         guias = [row[1:] for row in guias]
         # print(guias)
         
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         
         cursor = connection.cursor()
         try:            

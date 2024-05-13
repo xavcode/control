@@ -1,9 +1,11 @@
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
+from config import load_config
+
 
 import guias, remesas, anexos, destinos, facturacion, config
-
+load_config()
 # Crear la ventana principal
 window = tk.Tk()
 window.title("Control Guias y Facturacion Intermodal")
@@ -65,6 +67,14 @@ window.config(menu=menu)
 
 
 window.grid_columnconfigure(0, weight=1)
+window.grid_columnconfigure(1, weight=1)
+window.grid_columnconfigure(2, weight=1)
+
+main_frame = ttk.LabelFrame(window, width=1200, height=700)
+main_frame.grid(row=0, column=1, sticky="wens", padx=10, pady=10, )
+main_frame.grid_rowconfigure(0, weight=1)
+main_frame.grid_columnconfigure(0, weight=1)
+main_frame.grid_propagate(False)
 
 
 def main_frame_show():
@@ -82,6 +92,9 @@ label = ttk.Label(main_frame, image=image)
 label.grid(row=0, column=0, sticky="") 
 
 # Frame para los botones
+frame_botones = ttk.Frame(window)
+frame_botones.grid(row=0,column=0, sticky="nswe", padx=10, pady=20)
+frame_botones.config()
 
 # frame_botones = ttk.Frame(window)
 # frame_botones.grid(row=0,column=0, sticky="nswe", padx=10, pady=20)
@@ -111,9 +124,25 @@ label.grid(row=0, column=0, sticky="")
 # btn_destinos = ttk.Button(frame_botones, text="Destinos", width=12, command=lambda: destinos.show_destinos(main_frame))
 # btn_destinos.grid(row=5, column=0, pady=10)
 
+btn_config = ttk.Button(frame_botones, text='Configuración', width=12, command=lambda: config.show_config(main_frame))
+btn_config.grid(row=6, column=0, pady=10)
 # btn_config = ttk.Button(frame_botones, text='Configuración', width=12, command=lambda: config.show_config(main_frame))
 # btn_config.grid(row=6, column=0, pady=10)
 
 
 if __name__ == "__main__":
     window.mainloop()
+
+##**-------------------------------------------------**##
+# style = ttk.Style(window)
+# style.configure("TButton", background="white")
+# style.configure("TLabel", background="white")
+# style.configure("TFrame", background="white")
+# style.configure("TLabelFrame", background="white")
+
+# main_frame = ttk.Frame(window, width=1200, height=700, style="TLabelFrame.TFrame")
+# main_frame.grid(row=0, column=1, sticky="wens", padx=10, pady=10, )
+# main_frame.grid_rowconfigure(0, weight=1)
+# main_frame.grid_columnconfigure(0, weight=1)
+# main_frame.grid_propagate(False)
+##**-------------------------------------------------**##

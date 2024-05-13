@@ -1,10 +1,9 @@
-
 from csv import writer
 import os
 import tkinter as tk
 import sqlite3
+from config import config,load_config
 
-import config
 import colors
 
 import pandas as pd
@@ -20,6 +19,8 @@ from tkcalendar import DateEntry
 import os
 import pandas as pd
 
+
+db_path = config['db_path']
 
 def _convert_stringval(value):
     if hasattr(value, 'typename'):
@@ -123,7 +124,7 @@ def show_remesas(frame):
             messagebox.showerror("", "Ingrese un número de guía")
             return
         try:         
-            connection = sqlite3.connect(config.db_path)
+            connection = sqlite3.connect(db_path)
             query = f"SELECT guias.numero_guia, guias.unidades, guias.peso_Kg, guias.volumen_m3, guias.destino, guias.fecha_de_asignacion, guias.destinatario, destinos.valor_destino_1,  (guias.balance_RCE + guias.balance_FCE) AS balance_cobro  FROM guias JOIN destinos ON destinos.destino = guias.destino WHERE guias.numero_guia = '{id_guia}';"
             result = connection.execute(query)
             data = result.fetchall()
@@ -247,7 +248,7 @@ def show_remesas(frame):
             messagebox.showerror("", "El campo Destino no puede estar vacío")
             return        
         
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         query = f'''
                     INSERT INTO remesas(
                         id_remesa, 
@@ -303,7 +304,7 @@ def show_remesas(frame):
             confirmed = messagebox.askyesno("Confirmar", f"Desea borrar la remesa {id_remesa}?")
             if not confirmed:
                 return
-            connection = sqlite3.connect(config.db_path)
+            connection = sqlite3.connect(db_path)
             cursor = connection.cursor()
 
             # Primera consulta para eliminar de la tabla remesas_guias
@@ -394,7 +395,7 @@ def show_remesas(frame):
         enable_entries_guia()
         cbbx_destino_remesa.set('')
     def list_remesas():
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         query = f'''
                     SELECT 
                         remesas.id_remesa, 
@@ -437,7 +438,7 @@ def show_remesas(frame):
             table_list_remesas.insert("", "end", values=row)
         connection.close()  
     def get_destinos_db() :
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         query = "SELECT destino FROM destinos;"
         result = connection.execute(query)
         data = result.fetchall()
@@ -628,7 +629,7 @@ def show_remesas(frame):
             messagebox.showerror("", "Ingrese un número de remesa")
             return
         try: #get the data of remesas from the database
-            connection = sqlite3.connect(config.db_path)
+            connection = sqlite3.connect(db_path)
             query = f'''
                         SELECT 
                             id_remesa, 
@@ -676,7 +677,7 @@ def show_remesas(frame):
             messagebox.showerror("", f"Error al buscar la remesa: {str(e)}")    
         
         try: #get the data of guias of every remesa from the database
-            connection = sqlite3.connect(config.db_path)
+            connection = sqlite3.connect(db_path)
             query = f'''                        
                    SELECT 
                         guias.numero_guia, 
@@ -731,7 +732,7 @@ def show_remesas(frame):
         entry_id_remesa.state(["!readonly"])
         
         #HERE IS THE QUERY TO UPDATE THE REMESA ENTRIES
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         try:
             query = f'''
                         UPDATE remesas
@@ -995,7 +996,7 @@ def show_remesas(frame):
             messagebox.showerror("", "Ingrese un número de remesa")
             return
         try:
-            connection = sqlite3.connect(config.db_path)
+            connection = sqlite3.connect(db_path)
             query = f'''
                         SELECT DISTINCT
                             remesas_guias.guia_id, 
@@ -1042,8 +1043,7 @@ def show_remesas(frame):
             messagebox.showerror("", f"Error al buscar la remesa: {str(e)}")
         finally:
             connection.close()
-                
-             
+                   
     def btnsearch_remesa(id_remesa):        
         if id_remesa:
             search_remesa(id_remesa)
@@ -1066,7 +1066,7 @@ def show_remesas(frame):
             for entry in entries:
                 entry.delete(0, tk.END)
         
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         
         query = f'''
                     SELECT r.id_remesa,
@@ -1114,7 +1114,7 @@ def show_remesas(frame):
         if not id_remesa:
             messagebox.showerror("", "Ingrese un número de remesa")
             return        
-        connection = sqlite3.connect(config.db_path)
+        connection = sqlite3.connect(db_path)
         
         try:
             query_header = f''' 

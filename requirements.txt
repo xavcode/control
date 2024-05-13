@@ -3,3 +3,5 @@ pdfplumber
 PyPDF2
 tkcalendar
 openpyxl
+xlsxwriter
+configparser
