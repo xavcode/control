@@ -6,7 +6,6 @@ from config import load_config
 
 
 import guias, remesas, anexos, destinos, facturacion, config
-load_config()
 # Crear la ventana principal
 window = tk.Tk()
 window.title("Control Guias y Facturacion Intermodal")

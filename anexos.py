@@ -5,12 +5,10 @@ import tkinter as tk
 import PyPDF2
 import re
 import sqlite3
-from config import config, load_config
+from config import load_config
 from tkinter import *
 from tkinter import ttk, filedialog, messagebox
 
-load_config()
-db_path = config['db_path'] 
 
 def _convert_stringval(value):
     if hasattr(value, 'typename'):
@@ -25,11 +23,11 @@ ttk._convert_stringval = _convert_stringval # type: ignore
 
 
 def show_anexos(frame):
-    # create main frame for anexos
-    for widget in frame.winfo_children():
-        widget.grid_forget()
+    config =load_config()
+    db_path = config['db_path'] 
 
-    
+    for widget in frame.winfo_children():
+        widget.grid_forget()    
     tab_anexos = ttk.Notebook(frame)
     tab_anexos.grid(row=0, column=0, sticky="nswe", padx=10, pady=10)
     tab_anexos.grid_rowconfigure(0, weight=1)

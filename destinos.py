@@ -2,14 +2,13 @@ import pandas as pd
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import sqlite3
-from config import config
 from config import load_config
 
 
-db_path = config['db_path'] 
-
 
 def show_destinos(frame):
+    config = load_config()
+    db_path = config['db_path'] 
     for widget in frame.winfo_children():
         widget.grid_forget()
 

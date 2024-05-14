@@ -4,12 +4,13 @@ from tkinter import filedialog, messagebox, ttk
 import pandas as pd
 import sqlite3
 from sqlite3 import IntegrityError
-from config import config, load_config
+from config import load_config
 
-db_path = config['db_path'] 
 
-# define ui guias module
 def show_guias(frame):
+    config = load_config()
+    db_path = config['db_path'] 
+
     for widget in frame.winfo_children():
         widget.grid_forget()
 
