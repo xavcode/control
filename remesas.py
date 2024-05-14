@@ -2,7 +2,7 @@ from csv import writer
 import os
 import tkinter as tk
 import sqlite3
-from config import config,load_config
+from config import load_config
 
 import colors
 
@@ -20,7 +20,6 @@ import os
 import pandas as pd
 
 
-db_path = config['db_path']
 
 def _convert_stringval(value):
     if hasattr(value, 'typename'):
@@ -34,6 +33,8 @@ def _convert_stringval(value):
 ttk._convert_stringval = _convert_stringval # type: ignore
 
 def show_remesas(frame):
+    config = load_config()
+    db_path = config['db_path']
     for widget in frame.winfo_children():
         widget.grid_forget()
     def calc_total():

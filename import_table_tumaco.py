@@ -4,14 +4,13 @@ import tkinter as tk
 from tkinter import messagebox
 import os
 import sqlite3
+from config import load_config
 
-from config import config, load_config
-
-db_path = config['db_path'] 
-tumacho_path = config['tumaco_path']
 
 def import_remesa_from_excel():
-    file_path = tumacho_path
+    config = load_config()
+    db_path = config['db_path']  # type: ignore
+    file_path = config['tumaco_path'] # type: ignore
 
     if not os.path.exists(file_path):
         messagebox.showerror(
@@ -33,7 +32,6 @@ def import_remesa_from_excel():
             conductor = conductor.split(':')[1].strip()
             conductor = conductor.replace("CONDUCTOR", "").strip()
             
-        
         #get the headers data
         id_remesa = str(df.iat[0, 5].strip())
         manifiesto = str(df.iat[0, 7].strip())

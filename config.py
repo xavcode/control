@@ -2,62 +2,50 @@ import os
 import sys
 import tkinter as tk
 from tkinter import messagebox, filedialog,ttk
-import configparser
-
-# Ruta por defecto de la base de datos
-DEFAULT_DB_PATH = 'D:/intermodal/control_intermodal.db'
-DEFAULT_TUMACO_PATH = 'G:/Otros ordenadores/Mi PC/RELACION 2023/RELACION TUMACO 2024'
-DEFAULT_PUEBLOS_PATH = 'G:/Otros ordenadores/Mi PC/RELACION 2023/RELACION PUEBLOS 2024'
-
-# Ruta donde se guardará el archivo de configuración
-CONFIG_FILE_PATH = 'config.ini'
-
-# Configuración por defecto
-config = {
-    'db_path': DEFAULT_DB_PATH,
-    'tumaco_path': DEFAULT_TUMACO_PATH,
-    'pueblos_path': DEFAULT_PUEBLOS_PATH,
-}
-def load_config():
-    global config
-    if os.path.exists(CONFIG_FILE_PATH):
-        parser = configparser.ConfigParser()
-        parser.read(CONFIG_FILE_PATH)
-        if parser.has_section("Config"):
-            if  parser.has_option("Config", "db_path"):
-                config['db_path'] = parser.get("Config", "db_path")
-            if parser.has_option("Config", "tumaco_path"):  
-                config["tumaco_path"] = parser.get("Config", "tumaco_path")
-            if parser.has_option("Config", "pueblos_path"):
-                config["pueblos_path"] = parser.get("Config", "pueblos_path")      
+from configparser import ConfigParser
 
 # Función para cargar la configuración desde el archivo INI
+def load_config():
+    try:    
+        filepath = r'D:\javier\proyectos\PYTHON\control_intermodal\control\config.ini'   
+        if  not os.path.exists(filepath):
+            messagebox.showerror(
+                "", f"No se encontró el archivo de configuración{filepath} "
+            )
+            return
+        
+        parser = ConfigParser()
+        parser.read(filepath)
+        db_path = parser.get('paths', 'db_path')
+        pueblos_path = parser.get('paths', 'pueblos_path')
+        tumaco_path = parser.get('paths', 'tumaco_path')
+        return {'db_path': db_path, 'pueblos_path': pueblos_path, 'tumaco_path': tumaco_path}
+    except Exception as e:
+        messagebox.showerror(
+            "", f"Error al cargar la configuración: {e}"
+        )
+        return {}
+    # print(db_path, pueblos_path, tumaco_path, 'config')
+    # return {'db_path': db_path, 'pueblos_path': pueblos_path, 'tumaco_path': tumaco_path}
+
+config = load_config()
 def show_config(frame):
-    # Función para guardar la configuración en el archivo INI
-    
     def save_config():
-        parser = configparser.ConfigParser()
-        parser['Config'] = {
-            'db_path': config['db_path'],
-            'tumaco_path': config['tumaco_path'],
-            'pueblos_path': config['pueblos_path']
-        }
-        
-        
-        # parser["Config"] = 'db_path': config['db_path'],
-        #     'tumaco_path': config['tumaco_path'],
-        #     'pueblos_path': config['pueblos_path']
-        
-        with open(CONFIG_FILE_PATH, "w") as config_file:
+        parser = ConfigParser()
+        parser.read('config.ini')
+        parser.set('paths', 'db_path', entry_db.get())
+        parser.set('paths', 'pueblos_path', entry_pueblos.get())
+        parser.set('paths', 'tumaco_path', entry_tumaco.get())
+        #save the config file
+        with open('config.ini', 'w') as config_file:
             parser.write(config_file)
-        os.execl(sys.executable, sys.executable, *sys.argv)
+        # os.execl(sys.executable, sys.executable, *sys.argv)
 
     # Función para seleccionar la base de datos
     def select_db():
         global config
         file_path = filedialog.askopenfilename(filetypes=[("Archivo de base de datos", "*.db")])  
         if file_path:
-            config['db_path'] = file_path
             entry_db.delete(0, 'end')
             entry_db.insert('end', file_path)
     
@@ -65,7 +53,6 @@ def show_config(frame):
         global config
         file_path = filedialog.askopenfilename(filetypes=[("", "*.xlsx;*.xls;*.xlsm")])
         if file_path:
-            config['tumaco_path'] = file_path
             entry_tumaco.delete(0, 'end')
             entry_tumaco.insert('end', file_path)
     
@@ -73,7 +60,6 @@ def show_config(frame):
         global config
         file_path = filedialog.askopenfilename(filetypes=[("", "*.xlsx;*.xls;*.xlsm")])
         if file_path:
-            config['pueblos_path'] = file_path
             entry_pueblos.delete(0, 'end')
             entry_pueblos.insert('end', file_path)
             
@@ -91,7 +77,7 @@ def show_config(frame):
 
     entry_db = ttk.Entry(frame_config) 
     entry_db.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=5, pady=5 )
-    entry_db.insert('end', config['db_path'])
+    entry_db.insert('end', config['db_path']) # type: ignore
     
     #clean the entry before insert the new path
     btn_db = ttk.Button(frame_config, text="Seleccionar", command=lambda: select_db()) # type: ignore
@@ -107,7 +93,7 @@ def show_config(frame):
     
     entry_tumaco = ttk.Entry(frame_config)
     entry_tumaco.grid(row=5, column=0, columnspan=2, sticky="we", padx=5, pady=5)
-    entry_tumaco.insert('end', config['tumaco_path'])
+    entry_tumaco.insert('end', config['tumaco_path']) # type: ignore
     
     btn_tumaco = ttk.Button(frame_config, text="Seleccionar", command=lambda: save_tumaco_file()) # type: ignore
     btn_tumaco.grid(row=5, column=2,  sticky="w", padx=5, pady=5)
@@ -123,7 +109,7 @@ def show_config(frame):
     
     entry_pueblos = ttk.Entry(frame_config)
     entry_pueblos.grid(row=9, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
-    entry_pueblos.insert('end', config['pueblos_path'])
+    entry_pueblos.insert('end', config['pueblos_path']) # type: ignore
     
     btn_pueblos = ttk.Button(frame_config, text="Seleccionar", command=lambda: save_pueblos_file()) # type: ignore
     btn_pueblos.grid(row=9, column=2,  sticky="w", padx=5, pady=5)

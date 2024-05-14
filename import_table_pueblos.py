@@ -1,32 +1,22 @@
-from datetime import datetime
 import pandas as pd
 import tkinter as tk
-from tkinter import messagebox
 import os
 import sqlite3
-
-from config import config, load_config
-
-
-db_path = config['db_path']
-pueblos_path = config['pueblos_path'] 
+from datetime import datetime
+from tkinter import messagebox
+from configparser import ConfigParser
+from config import load_config
 
 
-def import_remesa_from_excel():   
-    print(pueblos_path)
-    print(db_path)
+def import_remesa_from_excel():
+    config = load_config()
+    db_path = config['db_path'] # type: ignore
+    file_path = config['pueblos_path']     # type: ignore
     
-    file_path = pueblos_path
-
-    if not os.path.exists(file_path):
-        print(config['pueblos_path'])
-        messagebox.showerror(
-            "", f"No se encontró el archivo {file_path} "
-        )
-        return
-    if file_path:
+    try: 
+        
         df = pd.read_excel(
-            f"{file_path}", header=None, sheet_name="plantilla_remesa"
+        f"{file_path}", header=None, sheet_name="plantilla_remesa"
         )
         
         # # Check if the last row contains the word "Total"
@@ -127,7 +117,17 @@ def import_remesa_from_excel():
                 messagebox.showerror("Error", f"La remesa {id_remesa} ya existe")
             else:
                 messagebox.showerror("Error", f"Ocurrió un error al guardar la remesa: {str(e)}")
-        connection.close()
+        finally:        
+            connection.close()
+
+    
+    except Exception as e:
+        messagebox.showerror(
+            "", f"Error al cargar la configuración: {e}"
+        )
+        return
+    
+        
 
 root = tk.Tk()
 root.withdraw()

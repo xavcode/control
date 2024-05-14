@@ -11,14 +11,14 @@ from tkinter import *
 from tkinter import ttk, filedialog, messagebox
 from tkcalendar import DateEntry
 
-from config import config, load_config
+from config import load_config
 import pandas as pd
 import os
 import pandas as pd
 import os
 import xlsxwriter
 
-db_path = config['db_path'] 
+
 
 def _convert_stringval(value):
     if hasattr(value, 'typename'):
@@ -32,6 +32,9 @@ ttk._convert_stringval = _convert_stringval # type: ignore
 
 num =1
 def show_facturacion(frame):
+    config = load_config()
+    db_path = config['db_path'] 
+    
     for widget in frame.winfo_children():
         widget.grid_forget()
     
