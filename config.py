@@ -23,13 +23,13 @@ def load_config():
     if os.path.exists(CONFIG_FILE_PATH):
         parser = configparser.ConfigParser()
         parser.read(CONFIG_FILE_PATH)
-        if parser.has_section("Config"):
-            if  parser.has_option("Config", "db_path"):
-                config['db_path'] = parser.get("Config", "db_path")
-            if parser.has_option("Config", "tumaco_path"):  
-                config["tumaco_path"] = parser.get("Config", "tumaco_path")
-            if parser.has_option("Config", "pueblos_path"):
-                config["pueblos_path"] = parser.get("Config", "pueblos_path")      
+        if parser.has_section("paths"):
+            if  parser.has_option("paths", "db_path"):
+                config['db_path'] = parser.get("paths", "db_path")
+            if parser.has_option("paths", "tumaco_path"):  
+                config["tumaco_path"] = parser.get("paths", "tumaco_path")
+            if parser.has_option("paths", "pueblos_path"):
+                config["pueblos_path"] = parser.get("paths", "pueblos_path")      
 
 # Función para cargar la configuración desde el archivo INI
 def show_config(frame):
@@ -37,16 +37,12 @@ def show_config(frame):
     
     def save_config():
         parser = configparser.ConfigParser()
-        parser['Config'] = {
+        parser['paths'] = {
             'db_path': config['db_path'],
             'tumaco_path': config['tumaco_path'],
             'pueblos_path': config['pueblos_path']
         }
-        
-        
-        # parser["Config"] = 'db_path': config['db_path'],
-        #     'tumaco_path': config['tumaco_path'],
-        #     'pueblos_path': config['pueblos_path']
+
         
         with open(CONFIG_FILE_PATH, "w") as config_file:
             parser.write(config_file)
