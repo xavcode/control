@@ -1,20 +1,38 @@
 import tkinter as tk
-from tkinter import *
+from tkinter import * # type: ignore
 from tkinter import ttk
 
-import guias, remesas, anexos, destinos, facturacion, config
+# import ttkbootstrap as ttk
+# from ttkbootstrap.constants import *
+
+from ttkthemes import ThemedTk
+import guias, remesas, anexos, destinos, facturacion, config, ui
+
 
 # Crear la ventana principal
-window = tk.Tk()
+#*****************BOOTSTRAP*******************#
+# root = tk.Tk()
+# window = ttk.Window()
+# window = ttk.Window(themename="sandstone",)
+
+
+window = ThemedTk(theme="radiance")
+screen_width = window.winfo_screenwidth()
+screen_height = window.winfo_screenheight()
+full_screen = f"{screen_width}x{screen_height}"
+
+
 window.title("Control Guias y Facturacion Intermodal")
-window.geometry("1360x800")
-window.resizable(False, False)
+window.geometry(full_screen)
+window.state('zoomed')
+
 
 ##********** MENU **********##
 
-menu = Menu(window)
+
+menu = tk.Menu(window, )
 menu_archivo = Menu(menu, tearoff=0)
-menu_archivo.add_command(label="Guías", command=lambda: guias.show_guias(main_frame))
+# menu_archivo.add_command(label="Guías", command=lambda: guias.show_guias(main_frame))
 menu_archivo.add_command(label="Remesas", command=lambda: remesas.show_remesas(main_frame))
 menu_archivo.add_command(label="Anexos", command=lambda: anexos.show_anexos(main_frame))
 menu_archivo.add_command(label="Facturación", command=lambda: facturacion.show_facturacion(main_frame))
@@ -25,9 +43,9 @@ menu_archivo.add_command(label="Salir", command=window.quit)
 menu.add_cascade(label="Archivo", menu=menu_archivo)
 
 menu_guias = Menu(menu, tearoff=0)
-menu_guias.add_command(label="Agregar Guía", command=lambda: guias.show_guias(main_frame))
-menu_guias.add_command(label="Buscar Guía", command=lambda: guias.show_guias(main_frame))
-menu_guias.add_command(label="Total Guías", command=lambda: guias.show_guias(main_frame))
+menu_guias.add_command(label="Buscar Guía", command=lambda: guias.show_guias(main_frame,0))
+menu_guias.add_command(label="Agregar Guías", command=lambda: guias.show_guias(main_frame,1))
+menu_guias.add_command(label="Total Guías", command=lambda: guias.show_guias(main_frame,2))
 menu.add_cascade(label="Guías", menu=menu_guias)
 
 menu_remesas = Menu(menu, tearoff=0)
@@ -63,56 +81,25 @@ menu.add_cascade(label="Configuración", menu=menu_opciones)
 
 window.config(menu=menu)
 
-
 window.grid_columnconfigure(0, weight=1)
-
+window.grid_rowconfigure(0, weight=1)
 
 def main_frame_show():
     for widget in main_frame.winfo_children():
         widget.destroy()
 
-main_frame = ttk.LabelFrame(window, width=1200, height=700, )
-main_frame.grid(row=0, column=0, sticky="wens", padx=10, pady=10, )
-# main_frame.grid_rowconfigure(0, weight=1)
-# main_frame.grid_columnconfigure(0, weight=1)
-main_frame.grid_propagate(False)  
-image_path = "assets/intermodal_camion.png"
+
+main_frame = ttk.Frame(window,  style="frame.TFrame" )
+main_frame.grid(row=0, column=0, sticky="")
+# main_frame.grid_propagate(False)
+main_frame.columnconfigure(0, weight=1)
+main_frame.rowconfigure(0, weight=1)
+
+image_path = "assets/intermodal_hero.png"
 image = tk.PhotoImage(file=image_path)
 label = ttk.Label(main_frame, image=image)
-label.grid(row=0, column=0, sticky="") 
+label.grid(row=0, column=0, sticky="nswe")
 
-# Frame para los botones
-
-# frame_botones = ttk.Frame(window)
-# frame_botones.grid(row=0,column=0, sticky="nswe", padx=10, pady=20)
-# frame_botones.config()
-
-
-# btn_home = ttk.Button(frame_botones, text="Inicio", width=12, command=lambda: main_frame_show())
-# btn_home.grid(row=0, column=0, pady=10)
-
-
-# btn_guias = ttk.Button(frame_botones, text="Guías", command=lambda: guias.show_guias(main_frame), width=12)
-# btn_guias.grid(row=1, column=0, pady=10)
-
-
-# btn_remesas = ttk.Button(frame_botones, text="Remesas", command=lambda: remesas.show_remesas(main_frame), width=12,)
-# btn_remesas.grid(row=2, column=0, pady=10)
-
-
-# btn_anexos = ttk.Button(frame_botones, text="Anexos", width=12, command=lambda: anexos.show_anexos(main_frame))
-# btn_anexos.grid(row=3, column=0, pady=10)
-
-
-# btn_facturacion = ttk.Button(frame_botones, text="Facturación", width=12, command=lambda: facturacion.show_facturacion(main_frame))
-# btn_facturacion.grid(row=4, column=0, pady=10)
-
-
-# btn_destinos = ttk.Button(frame_botones, text="Destinos", width=12, command=lambda: destinos.show_destinos(main_frame))
-# btn_destinos.grid(row=5, column=0, pady=10)
-
-# btn_config = ttk.Button(frame_botones, text='Configuración', width=12, command=lambda: config.show_config(main_frame))
-# btn_config.grid(row=6, column=0, pady=10)
 
 
 if __name__ == "__main__":

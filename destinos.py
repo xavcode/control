@@ -8,7 +8,8 @@ from config import load_config
 
 def show_destinos(frame):
     config = load_config()
-    db_path = config['db_path'] 
+    db_path = config['db_path']  # type: ignore
+    
     for widget in frame.winfo_children():
         widget.grid_forget()
 

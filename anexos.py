@@ -24,7 +24,7 @@ ttk._convert_stringval = _convert_stringval # type: ignore
 
 def show_anexos(frame):
     config =load_config()
-    db_path = config['db_path'] 
+    db_path = config['db_path']  # type: ignore
 
     for widget in frame.winfo_children():
         widget.grid_forget()    
@@ -445,13 +445,11 @@ def show_anexos(frame):
     tree_search.heading("FTE Total", text="Total")
     # Bind the function get_detail_anexo to the treeview
     tree_search.bind("<ButtonRelease-1>", lambda event: get_detail_anexo(tree_search.item(tree_search.focus())["values"][0]))
-    
 
     # Add a scrollbar to the treeview
     scrollbar_detail = ttk.Scrollbar(frame_search, orient="vertical", command=tree_search.yview)
     scrollbar_detail.grid(row=0, column=4, sticky="ns")
     tree_search.configure(yscrollcommand=scrollbar_detail.set)
-    
     
     frame_search_anexos_info = ttk.Frame(frame_search_anexos)
     frame_search_anexos_info.grid(row=1, column=0, padx=10, pady=10, sticky="nw")

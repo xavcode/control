@@ -2,24 +2,19 @@ from csv import writer
 import os
 import tkinter as tk
 import sqlite3
-from config import load_config
-
 import colors
-
 import pandas as pd
+
+# from openpyxl import load_workbook
+
+from config import load_config
 from pandas import ExcelWriter
-
-import openpyxl
-from openpyxl import load_workbook
-
 from datetime import datetime
-from tkinter import *
+from tkinter import * # type: ignore
 from tkinter import ttk, messagebox,filedialog
 from tkcalendar import DateEntry
 import os
 import pandas as pd
-
-
 
 def _convert_stringval(value):
     if hasattr(value, 'typename'):
@@ -34,7 +29,7 @@ ttk._convert_stringval = _convert_stringval # type: ignore
 
 def show_remesas(frame):
     config = load_config()
-    db_path = config['db_path']
+    db_path = config['db_path'] # type: ignore
     for widget in frame.winfo_children():
         widget.grid_forget()
     def calc_total():
@@ -783,126 +778,119 @@ def show_remesas(frame):
             messagebox.showerror("", f"Error al actualizar las guias: {str(e)}")        
 
         connection.close()
-    parent = ttk.Frame(frame, width=1366, height=900)
-    parent.grid(row=0, column=0, padx=10, sticky="we")
-    parent.grid_propagate(False)
+    parent = tk.Frame(frame,)
+    parent.grid(row=0, column=0, padx=10, sticky="nwe")
+    parent.columnconfigure(0, weight=1)
+    for i in range(10):
+        parent.rowconfigure(i, weight=1)
+    
     for widget in parent.winfo_children():
         widget.grid_forget()
     
     tabs_remesas = ttk.Notebook(parent, )
-    tabs_remesas.grid(row=0, column=0, padx=20, pady=10, sticky="nswe")
+    tabs_remesas.grid(row=0, column=0, padx=20, pady=10, sticky="we")
 
-    frame_remesas = ttk.LabelFrame(tabs_remesas )
-    frame_remesas.grid(row=0, column=0, columnspan=4, sticky="nsew")
+    frame_remesas = tk.Frame(tabs_remesas)
+    frame_remesas.grid(row=0, column=0, sticky="")
+    frame_remesas.columnconfigure(0, weight=1)
     
     frame_add_remesa = Frame(frame_remesas, )
-    frame_add_remesa.grid(row=0, column=0, padx=10, pady=10, sticky="nwes")
+    frame_add_remesa.grid(row=0, column=0, padx=10, pady=10, sticky="")
         
-    frame_form_remesa = LabelFrame(frame_add_remesa, text="Datos de la Remesa" )
-    frame_form_remesa.grid(row=1, column=0, padx=(10,10), pady=10, sticky="wens")
+    frame_form_remesa = tk.LabelFrame(frame_add_remesa, text="Datos de la Remesa")
+    frame_form_remesa.grid(row=1, column=0, padx=(10,10), pady=10, sticky="nsew")
 
-    tk.Label(frame_form_remesa, text="Remesa: (RTP)").grid(  row=1, column=0, sticky="w", padx=10 )
+    # Configuración de filas y columnas para expandirse
+    for i in range(5):
+        frame_form_remesa.grid_rowconfigure(i, weight=1)
+    for i in range(8):
+        frame_form_remesa.grid_columnconfigure(i, weight=1)
+
+    tk.Label(frame_form_remesa, text="Remesa: (RTP)", anchor="e").grid(row=1, column=0, sticky="e", padx=10)
     entry_id_remesa = ttk.Entry(frame_form_remesa)
-    entry_id_remesa.grid(row=1, column=1, padx=5, pady=5)
-    # entry_id_remesa.insert(0, "RTP24-")
+    entry_id_remesa.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 
-    tk.Label(frame_form_remesa, text="Manifiesto:").grid( row=1, column=2, sticky="w", padx=10  )
+    tk.Label(frame_form_remesa, text="Manifiesto:", anchor="e").grid(row=1, column=2, sticky="e", padx=10)
     entry_manifiesto = ttk.Entry(frame_form_remesa)
-    entry_manifiesto.grid(row=1, column=3, padx=5, pady=5)
-    # entry_manifiesto.insert(0, "MCP24-")
+    entry_manifiesto.grid(row=1, column=3, padx=5, pady=5, sticky="ew")
 
-    ttk.Label(frame_form_remesa, text="Conductor:").grid( row=1, column=4, sticky="w", padx=10)
+    ttk.Label(frame_form_remesa, text="Conductor:", anchor="e").grid(row=1, column=4, sticky="e", padx=10)
     entry_conductor = ttk.Entry(frame_form_remesa)
-    entry_conductor.grid(row=1, column=5, padx=5, pady=5)
+    entry_conductor.grid(row=1, column=5, padx=5, pady=5, sticky="ew")
 
-    ttk.Label(frame_form_remesa, text="Fecha:").grid( row=1, column=6, sticky="w", padx=10 )
-    entry_fecha = DateEntry(frame_form_remesa,   foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
-    entry_fecha.grid(row=1, column=7, padx=5, ipadx=15, pady=5, )
+    ttk.Label(frame_form_remesa, text="Fecha:", anchor="e").grid(row=1, column=6, sticky="e", padx=10)
+    entry_fecha = DateEntry(frame_form_remesa, foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
+    entry_fecha.grid(row=1, column=7, padx=5, ipadx=15, pady=5, sticky="ew")
 
-    ttk.Label(frame_form_remesa, text="Total Unidades:").grid(row=2, column=0, sticky="w", padx=10    )
+    ttk.Label(frame_form_remesa, text="Total Unidades:", anchor="e").grid(row=2, column=0, sticky="ew", padx=10)
     entry_total_uds = ttk.Entry(frame_form_remesa)
-    entry_total_uds.grid(row=2, column=1, padx=5, pady=5,)
+    entry_total_uds.grid(row=2, column=1, padx=5, pady=5, sticky="ew")
 
-    ttk.Label(frame_form_remesa, text="Total Kg:").grid(row=2, column=2, sticky="w", padx=10)
+    ttk.Label(frame_form_remesa, text="Total Kg:", anchor="e").grid(row=2, column=2, sticky="ew", padx=10)
     entry_total_kg = ttk.Entry(frame_form_remesa)
-    entry_total_kg.grid(row=2, column=3, padx=5, pady=5)
-    
-    ttk.Label(frame_form_remesa, text="Total Vol:").grid(row=2, column=4, sticky="w", padx=10)
+    entry_total_kg.grid(row=2, column=3, padx=5, pady=5, sticky="ew")
+
+    ttk.Label(frame_form_remesa, text="Total Vol:", anchor="e").grid(row=2, column=4, sticky="ew", padx=10)
     entry_total_volumen = ttk.Entry(frame_form_remesa)
-    entry_total_volumen.grid(row=2, column=5, padx=5, pady=5)
-    
-    ttk.Label(frame_form_remesa, text="Cobro Total:").grid( row=2, column=6, sticky="w", padx=10 )    
+    entry_total_volumen.grid(row=2, column=5, padx=5, pady=5, sticky="ew")
+
+    ttk.Label(frame_form_remesa, text="Cobro Total:", anchor="e").grid(row=2, column=6, sticky="ew", padx=10)
     entry_cobro_total = ttk.Entry(frame_form_remesa)
-    entry_cobro_total.grid(row=2, column=7, padx=5, pady=5)
+    entry_cobro_total.grid(row=2, column=7, padx=5, pady=5, sticky="ew")
 
-    ttk.Label(frame_form_remesa, text="Flete Coord RTP:").grid(row=3, column=0, sticky="w", padx=10)
+    ttk.Label(frame_form_remesa, text="Flete Coord RTP:", anchor="e").grid(row=3, column=0, sticky="ew", padx=10)
     entry_flete_coord_rtp = ttk.Entry(frame_form_remesa)
-    entry_flete_coord_rtp.grid(row=3, column=1, padx=5, pady=5)
-    
-    ttk.Label(frame_form_remesa, text="Ingreso Op. Total:").grid(row=3, column=2, sticky="w", padx=10)       
-    entry_ingreso_operativo_total = ttk.Entry(frame_form_remesa)
-    entry_ingreso_operativo_total.grid(row=3, column=3, padx=5, pady=5)
+    entry_flete_coord_rtp.grid(row=3, column=1, padx=5, pady=5, sticky="ew")
 
-    ttk.Label(frame_form_remesa, text="Gasto Operativo:").grid( row=3, column=4, sticky="w", padx=10  )
+    ttk.Label(frame_form_remesa, text="Ingreso Op. Total:", anchor="e").grid(row=3, column=2, sticky="ew", padx=10)
+    entry_ingreso_operativo_total = ttk.Entry(frame_form_remesa)
+    entry_ingreso_operativo_total.grid(row=3, column=3, padx=5, pady=5, sticky="ew")
+
+    ttk.Label(frame_form_remesa, text="Gasto Operativo:", anchor="e").grid(row=3, column=4, sticky="ew", padx=10)
     entry_gasto_operativo = ttk.Entry(frame_form_remesa)
-    entry_gasto_operativo.grid(row=3, column=5, padx=5, pady=5)
+    entry_gasto_operativo.grid(row=3, column=5, padx=5, pady=5, sticky="ew")
     entry_gasto_operativo.bind("<KeyRelease>", lambda event: calc_gans())
 
-    ttk.Label(frame_form_remesa, text="Utilidad:").grid( row=3, column=6, sticky="w", padx=10)
+    ttk.Label(frame_form_remesa, text="Utilidad:", anchor="e").grid(row=3, column=6, sticky="ew", padx=10)
     entry_utilidad = ttk.Entry(frame_form_remesa)
-    entry_utilidad.grid(row=3, column=7, padx=5, pady=5)
+    entry_utilidad.grid(row=3, column=7, padx=5, pady=5, sticky="ew")
 
-    ttk.Label(frame_form_remesa, text="Rentabilidad:").grid(row=4, column=0, sticky="w", padx=10)
+    ttk.Label(frame_form_remesa, text="Rentabilidad:", anchor="e").grid(row=4, column=0, sticky="ew", padx=10)
     entry_rentabilidad = ttk.Entry(frame_form_remesa)
-    entry_rentabilidad.grid(row=4, column=1, padx=5, pady=5)
+    entry_rentabilidad.grid(row=4, column=1, padx=5, pady=5, sticky="ew")
     entry_rentabilidad.bind("<KeyRelease>", lambda event: calc_gans())
-    
-    destinos_db = get_destinos_db()
-    ttk.Label(frame_form_remesa, text="Destino:").grid(row=4, column=2, sticky="w", padx=10)    
-    cbbx_destino_remesa = ttk.Combobox(frame_form_remesa, values=destinos_db, state="readonly")
-    cbbx_destino_remesa.grid(row=4, column=3, padx=5, pady=5)
-    
-    #* FRAME TREE VIEW
-    #? TABLE FOR PREVIEW columnspan
-    list_camps = ("numero_guia", "unidades", "volumen_m3", "peso_Kg", "destino", "fecha_de_asignacion",  "valor", "cliente","balance_cobro") # add volumen when be needed
-    table_add_guia = ttk.Treeview(frame_add_remesa,columns=list_camps, show="headings", height=8)
-    table_add_guia.grid(row=3, column=0, columnspan=10, sticky="wes", padx=(10,20), pady=10,)
 
-    # Create a vertical scrollbar
-    scrollbar = ttk.Scrollbar(frame_add_remesa, orient="vertical", command=table_add_guia.yview)
-    scrollbar.grid(row=3, column=8, sticky="wns", pady=20,) 
-    table_add_guia.configure(yscrollcommand=scrollbar.set)
+    destinos_db = get_destinos_db()
+    ttk.Label(frame_form_remesa, text="Destino:", anchor="e").grid(row=4, column=2, sticky="ew", padx=10)
+    cbbx_destino_remesa = ttk.Combobox(frame_form_remesa, values=destinos_db, state="readonly")
+    cbbx_destino_remesa.grid(row=4, column=3, padx=5, pady=5, sticky="ew")
+    
+    
+    list_camps = ("Numero_guia", "Unidades", "Volumen_m3", "Peso_Kg", "Destino", "Fecha_de_asignacion",  "Valor", "Cliente","Balance_cobro")
+    
+    frame_add_guia = LabelFrame(frame_add_remesa, )
+    frame_add_guia.grid(row=3, column=0, padx=(10, 0), pady=10, sticky="nswe")
+    
+    table_add_guia = ttk.Treeview(frame_add_guia, columns=list_camps, height=12)
+    table_add_guia.grid(row=3, column=0, columnspan=2, sticky="", padx=(10,20), pady=10,)
+    
+    for col in list_camps:
+        table_add_guia.heading(col, text=col)
+        table_add_guia.column(col, width=150, stretch=True, anchor="center")
+   
+    vscrollbar = ttk.Scrollbar(frame_add_guia, orient="vertical", command=table_add_guia.yview)
+    vscrollbar.grid(row=3, column=3, sticky="ens", pady=5,) 
+    table_add_guia.configure(yscrollcommand=vscrollbar.set)
     
     # if the balance is != 0, the row will be colored in yellow
-    table_add_guia.tag_configure("has_cobro", background=colors.bg_has_cobro)  
-
-    # table_add_guia.column("#0", width=0, stretch=False, anchor="center")
-    table_add_guia.column("numero_guia", width=120, stretch=False, anchor="center")
-    table_add_guia.column("unidades", width=70, stretch=False, anchor="center")
-    table_add_guia.column("volumen_m3", width=70, stretch=False, anchor="center")
-    table_add_guia.column("peso_Kg", width=70, stretch=False, anchor="center")
-    table_add_guia.column("destino", width=180, stretch=False, anchor="center")
-    table_add_guia.column("fecha_de_asignacion", width=100, stretch=False, anchor="center")
-    table_add_guia.column("valor", width=100, stretch=False, anchor="center")
-    table_add_guia.column("cliente", width=300, stretch=False, anchor="center")
-    table_add_guia.column("balance_cobro", width=100, stretch=False, anchor="center")
-    
-    # Configurar encabezados de columna
-    table_add_guia.heading("numero_guia", text="Guia")
-    table_add_guia.heading("unidades", text="Uds")
-    table_add_guia.heading("volumen_m3", text="Vol(M3)")
-    table_add_guia.heading("peso_Kg", text="Kg")
-    table_add_guia.heading("destino", text="Destino")
-    table_add_guia.heading("fecha_de_asignacion", text="F.Asignacion")
-    table_add_guia.heading("valor", text="Valor")
-    table_add_guia.heading("cliente", text="Cliente")
-    table_add_guia.heading("balance_cobro", text="Bal. de Cobro")
+    table_add_guia.tag_configure("has_cobro", background=colors.bg_has_cobro)
+    table_add_guia.column("#0", width=0, stretch=False, anchor="center")
     
     #*  FRAME GUIAS!!!!
 
     # # Crear y ubicar los widgets para cada elemento de la tabla
-    frame_guia = Frame(frame_add_remesa )
-    frame_guia.grid(row=2, column=0,  padx=(10, 0), sticky="we")
+    frame_guia = Frame(frame_add_remesa, )
+    frame_guia.grid(row=2, column=0,  padx=(10, 0), sticky="")
 
     ttk.Label(frame_guia, text="Guia:").grid(row=0, column=0, padx=10,)
     entry_guia = ttk.Entry(frame_guia, width=15, justify="center")
@@ -973,15 +961,14 @@ def show_remesas(frame):
     btn_actualizar_remesa.grid(row=4, column=7, sticky='e', padx=5, pady=10)    
     
     btn_guardar = ttk.Button(frame_remesas, text="Guardar Remesa", command= lambda: save_remesa())
-    btn_guardar.grid(row=5, column=0, sticky='w', padx=25, pady=10)
+    btn_guardar.grid(row=5, column=0, sticky='s', padx=25, pady=30, )
     
     calc_total()
-    tabs_remesas.add(frame_remesas, text="Agregar Remesa")    
+    tabs_remesas.add(frame_remesas, text="Agregar Remesa")        
     
-    
-    #********************************************************* FRAME TAB SEARCH REMESA******************************************************** #
-    #********************************************************* FRAME TAB SEARCH REMESA******************************************************** #
-    #********************************************************* FRAME TAB SEARCH REMESA******************************************************** #
+    #******************************************** FRAME TAB SEARCH REMESA******************************************************** #
+    #******************************************** FRAME TAB SEARCH REMESA******************************************************** #
+    #******************************************** FRAME TAB SEARCH REMESA******************************************************** #
     
     def on_double_click(event):
         item = event.widget.selection()[0]
@@ -1107,7 +1094,6 @@ def show_remesas(frame):
                     table_list_remesas.selection_set(item)
                     
                     table_list_remesas.see(item)
-    
     def export_remesa_to_factura(id_remesa):
         remesa, manifiesto, conductor, fecha = '', '', '', ''
         total_kg, total_uds, ingreso_operativo_total, cobro_total = 0,0,0,0
@@ -1255,23 +1241,30 @@ def show_remesas(frame):
 
     #********** TABLE LIST  REMESAS **********#
     #********** TABLE LIST  REMESAS **********#
-    frame_search_remesa = ttk.Frame(frame,)
-    frame_search_remesa.grid(row=0, column=0, columnspan=2, padx=10, sticky="wens" )
-
     
+    frame_search_remesa = tk.Frame(frame)
+    frame_search_remesa.grid(row=0, column=0, padx=10, sticky="" )
+    frame_search_remesa.grid_columnconfigure(0, weight=1)
+    for i in range(10):
+        frame_search_remesa.grid_rowconfigure(i, weight=1)    
+
     entry_cols = ("id_remesa", "manifiesto", "destino", "conductor", "fecha", "ingreso_operativo_total", "rentabilidad", "total_guias", "guias_facturadas", "guias_sin_facturar")
-    table_list_remesas = ttk.Treeview(frame_search_remesa, columns= entry_cols, show="headings", height=8)
+    
+    frame_table_remesas = tk.Frame(frame_search_remesa, )
+    frame_table_remesas.grid(row=0, column=0, padx=(20,0), sticky="")
+    frame_table_remesas.grid_columnconfigure(0, weight=1)
+    table_list_remesas = ttk.Treeview(frame_table_remesas, columns= entry_cols, height=10)    
     for col in entry_cols:
         table_list_remesas.heading(col, text=col)
-        table_list_remesas.column(col, width=115, stretch=False, anchor="center")
+        table_list_remesas.column(col, width=150, stretch=True, anchor="center")
+    table_list_remesas.column("#0", width=0, stretch=False, anchor="center")
 
-    table_list_remesas.grid(row=0, column=0, sticky="ew", )
+    table_list_remesas.grid(row=0, column=0, columnspan=2, sticky="", )
     table_list_remesas.bind("<ButtonRelease-1>", on_double_click)
     
-    vscrollbar = ttk.Scrollbar(frame_search_remesa, orient="vertical", command=table_list_remesas.yview)
-    vscrollbar.grid(row=0, column=12, sticky="ns", pady=10,) 
-    table_list_remesas.configure(yscrollcommand=vscrollbar.set)
-    
+    vscrollbar1 = ttk.Scrollbar(frame_table_remesas, orient="vertical", command=table_list_remesas.yview)
+    vscrollbar1.grid(row=0, column=3, sticky="ns", pady=10,) 
+    table_list_remesas.configure(yscrollcommand=vscrollbar1.set)
     
     #***********ENTRIES REMESA***********#
     #***********ENTRIES REMESA***********#
@@ -1279,16 +1272,14 @@ def show_remesas(frame):
     frame_edit_remesa = ttk.Frame(frame_search_remesa)
     frame_edit_remesa.grid(row=2, column=0, sticky="")            
     
-    frame_search_single_remesa = ttk.LabelFrame(frame_search_remesa,)
-    frame_search_single_remesa.grid(row=1, column=0, pady=10,  sticky="we")  
+    frame_search_single_remesa = ttk.Frame(frame_search_remesa,)
+    frame_search_single_remesa.grid(row=1, column=0, pady=10,  sticky="")  
 
-    
     btn_search_remesa = ttk.Button(frame_search_single_remesa, text="Buscar Remesa", command=lambda: btnsearch_remesa(entrysearch_remesa.get()))
-    btn_search_remesa.grid(row=1, column=0, sticky="w",  )    
+    btn_search_remesa.grid(row=1, column=0, padx=10, sticky="w",  )    
     
     entrysearch_remesa = ttk.Entry(frame_search_single_remesa, justify="center")
     entrysearch_remesa.grid(row=1, column=1,  )    
-    
     
     ttk.Label(frame_edit_remesa, text="ID Remesa:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
     entryid_remesa = ttk.Entry(frame_edit_remesa)
@@ -1304,7 +1295,6 @@ def show_remesas(frame):
     entryconductor = ttk.Entry(frame_edit_remesa)
     entryconductor.grid(row=0, column=5,  pady=5)        
     entryconductor.state(['readonly'])
-    
     
     ttk.Label(frame_edit_remesa, text="Destino:").grid(row=0, column=6, sticky="w", padx=5, pady=5)
     entrydestino = ttk.Entry(frame_edit_remesa, state="readonly")
@@ -1329,13 +1319,11 @@ def show_remesas(frame):
     entrytotal_volumen = ttk.Entry(frame_edit_remesa)
     entrytotal_volumen.grid(row=1, column=5,  pady=5)        
     entrytotal_volumen.state(['readonly'])
-
     
     ttk.Label(frame_edit_remesa, text="Flete Coord RTP:").grid(row=1, column=6, sticky="w", padx=5, pady=5)
     entryflete_coord_rtp = ttk.Entry(frame_edit_remesa)
     entryflete_coord_rtp.grid(row=1, column=7,  pady=5)        
     entryflete_coord_rtp.state(['readonly'])
-    
     
     ttk.Label(frame_edit_remesa, text="Ingreso Op. Total:").grid(row=1, column=8, sticky="w", padx=5, pady=5)
     entryingreso_operativo_total = ttk.Entry(frame_edit_remesa)
@@ -1361,53 +1349,38 @@ def show_remesas(frame):
     #***********TABLE LIST GUIAS-REMESA***********#    
     
     frame_search = ttk.LabelFrame(frame_search_remesa,  )
-    frame_search.grid(row=3, column=0, padx=10, pady=10, sticky="we", )
+    frame_search.grid(row=3, column=0, padx=10, pady=10, sticky="" )
     
-    list_camps = ("numero_guia", "estado", "destino", "destinatario", "unidades", "peso_Kg", "volumen_m3", "valor","fecha_de_asignacion", "en_anexo", "en_factura")
-    table_list_guias = ttk.Treeview(frame_search_remesa, columns=list_camps, show="headings", height=10)
-    table_list_guias.grid(row=3, column=0,  columnspan=2, pady=10, sticky="we")
+    list_camps = ("Numero_guia", "Estado", "Destinatario", "Destino", "Unidades", "Peso_Kg", "Volumen_m3", "Valor","Fecha_de_asignacion", "En_anexo", "En_factura")
     
-    table_list_guias.column("numero_guia", width=125, stretch=False, anchor="center")
-    table_list_guias.column("estado", width=150, stretch=False, anchor="center")
-    table_list_guias.column("destino", width=150, stretch=False, anchor="center")
-    table_list_guias.column("destinatario", width=200, stretch=False, anchor="center")
-    table_list_guias.column("unidades", width=50, stretch=False, anchor="center")
-    table_list_guias.column("peso_Kg", width=50, stretch=False, anchor="center")
-    table_list_guias.column("volumen_m3", width=50, stretch=False, anchor="center")
-    table_list_guias.column("valor", width=100, stretch=False, anchor="center")
-    table_list_guias.column("fecha_de_asignacion", width=100, stretch=False, anchor="center")
-    table_list_guias.column("en_anexo", width=75, stretch=False, anchor="center")
-    table_list_guias.column("en_factura", width=75, stretch=False, anchor="center")
+    frame_table_list_guias = ttk.Frame(frame_search_remesa, )
+    frame_table_list_guias.grid(row=3, column=0, padx=(20,0), pady=10, sticky="we")
     
-    
-    table_list_guias.heading("numero_guia", text="Guia")
-    table_list_guias.heading("estado", text="Estado")
-    table_list_guias.heading("destino", text="Destino")
-    table_list_guias.heading("destinatario", text="Destinatario")
-    table_list_guias.heading("unidades", text="Uds")                        
-    table_list_guias.heading("peso_Kg", text="Kg")
-    table_list_guias.heading("volumen_m3", text="Vol(M3)")
-    table_list_guias.heading("valor", text="Valor")
-    table_list_guias.heading("fecha_de_asignacion", text="F. Asignacion")
-    table_list_guias.heading("en_anexo", text="Anexo")
-    table_list_guias.heading("en_factura", text="Factura")    
+    table_list_guias = ttk.Treeview(frame_table_list_guias, columns=list_camps, height=12)
+    table_list_guias.grid(row=0, column=0,  columnspan=2, pady=10, sticky="we")
     
     table_list_guias.tag_configure("paid_invoice", background="#cff6c8")
     table_list_guias.tag_configure("pend_invoice", background="#fefda6")   
     
-    vscrollbar = ttk.Scrollbar(frame_search_remesa, orient="vertical", command=table_list_guias.yview)
-    vscrollbar.grid(row=3, column=12, sticky="ns")
-    table_list_guias.configure(yscrollcommand=vscrollbar.set)
+    for col in list_camps:
+        table_list_guias.heading(col, text=col)
+        table_list_guias.column(col, width=136, stretch=False, anchor="center")    
+    table_list_guias.column("#0", width=0, stretch=False, anchor="center")    
     
-    hscrollbar = ttk.Scrollbar(frame_search_remesa, orient="horizontal", command=table_list_guias.xview)
-    hscrollbar.grid(row=4, column=0, sticky="wes")
-    table_list_guias.configure(xscrollcommand=hscrollbar.set)
+    vscrollbar2 = ttk.Scrollbar(frame_table_list_guias, orient="vertical", command=table_list_guias.yview)
+    vscrollbar2.grid(row=0, column=3, pady=10, sticky="ns")
+    table_list_guias.configure(yscrollcommand=vscrollbar2.set)    
     
-    tabs_remesas.add(frame_search_remesa, text="Buscar Remesa")
+    hscrollbar2 = ttk.Scrollbar(frame_table_list_guias, orient="horizontal", command=table_list_guias.xview)
+    hscrollbar2.grid(row=1, column=0, columnspan=2, sticky="we")
+    table_list_guias.configure(xscrollcommand=hscrollbar2.set)
+        
+        
     entry_export_remesa_factura = ttk.Entry(frame_search_single_remesa)
     entry_export_remesa_factura.grid(row=1, column=6, padx=5,pady=5, )
     btn_export_remesa_factura = ttk.Button(frame_search_single_remesa, text="Exportar Remesa", command= lambda: export_remesa_to_factura(entry_export_remesa_factura.get().strip()) )
-    btn_export_remesa_factura.grid(row=1, column=5, padx=(150,5), pady=5)
+    btn_export_remesa_factura.grid(row=1, column=5, padx=(140,5), pady=5)
     
+    tabs_remesas.add(frame_search_remesa, text="Buscar Remesa")
     list_remesas()
     
