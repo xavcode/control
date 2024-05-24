@@ -7,7 +7,7 @@ import sqlite3
 from config import load_config
 from tkinter import ttk
 
-def show_guias(frame, tab_to_show):
+def show_guias(frame, tab_to_show, width, height):
     config = load_config()
     db_path = config['db_path']  # type: ignore
     
@@ -145,34 +145,23 @@ def show_guias(frame, tab_to_show):
     
     for widget in frame.winfo_children():
         widget.grid_forget()
-
-    # Read the CSV file into a DataFrame
-
-
-    parent = tk.Frame(frame, width=1366, height=768,)
-    parent.grid(row=0, column=0, padx=10, sticky="nswe")
-    parent.grid_propagate(False)
     
-    parent.columnconfigure(0, weight=1)
-    parent.rowconfigure(0, weight=1)
-    
-    for widget in parent.winfo_children():
-        widget.grid_forget()
-
-    tab_guias = ttk.Notebook(parent)
+    tab_guias = ttk.Notebook(frame, width=1366, height=768)
     tab_guias.grid(row=0, column=0, sticky="nswe")
+    tab_guias.grid_propagate(False)
+    tab_guias.columnconfigure(0, weight=1)
+    tab_guias.rowconfigure(0, weight=1)
     
     ##************************************************************
-    ##*******************TAB SEARCH GUIAS*************************
+    ##*********************** TAB GUIAS **************************
     ##************************************************************
     
     frame_search_guias = ttk.Frame(tab_guias,   )
-    frame_search_guias.grid(row=0, column=0, padx=0, pady=10, sticky="snwe" )
+    frame_search_guias.grid(row=0, column=0, sticky="snwe" )
     frame_search_guias.grid_columnconfigure(0, weight=1)
-        
    
     frame_buscar_guias = ttk.Frame(frame_search_guias,)
-    frame_buscar_guias.grid( row=2, column=0, sticky='we', padx=10, pady=10)    
+    frame_buscar_guias.grid( row=2, column=0, sticky='we', )    
     
     ttk.Label(frame_buscar_guias, text="Buscar Guías", font=("Arial", 16)).grid(row=0, column=0, columnspan=2, pady=10 )
     ttk.Label(frame_buscar_guias, text="Ingrese Guía:").grid(row=1, column=0, sticky="w")    
@@ -186,13 +175,12 @@ def show_guias(frame, tab_to_show):
 
     tab_guias.add(frame_search_guias, text="Buscar Guia",) 
     
-
     ##************************************************************
     ##*******************TAB ADD GUIAS ***************************
     ##************************************************************
     
     frame_add_guias = ttk.Frame(tab_guias,   )
-    frame_add_guias.grid(row=0, column=0, padx=0, pady=10, sticky="snwe" )
+    frame_add_guias.grid(row=0, column=0, padx=0, sticky="snwe" )
     frame_add_guias.grid_columnconfigure(0, weight=1)    
     
     frame_import_all = ttk.LabelFrame(frame_add_guias, text= 'Importar desde excel'  ) 
@@ -306,13 +294,12 @@ def show_guias(frame, tab_to_show):
     
     tab_guias.add(frame_add_guias, text="Agregar Guias")
     
-    
     ##************************************************************
     ##*****************TAB SHOW ALL GUIAS************************
     ##************************************************************
     
     frame_show_all_guias = ttk.Frame(tab_guias,   )
-    frame_show_all_guias.grid(row=0, column=0, padx=0, pady=10, sticky="we" )
+    frame_show_all_guias.grid(row=0, column=0, padx=0, sticky="we" )
     frame_show_all_guias.grid_columnconfigure(0, weight=1)
     
     cols = ("estado","numero_guia","fecha_de_asignacion","remitente","destino","destinatario","direccion_de_entrega","unidades","peso_Kg","volumen_m3","valor_declarado_(COP)","balance_cobro","telefono")
@@ -327,7 +314,6 @@ def show_guias(frame, tab_to_show):
     hscrollbar.grid(row=2, column=0, sticky='sew', pady=10 )
     table_all_guias.configure(xscrollcommand=hscrollbar.set)
     
-    
     style = ttk.Style()
     style.configure("Custom.Treeview", font=("Arial", 10))
     
@@ -340,8 +326,6 @@ def show_guias(frame, tab_to_show):
     table_all_guias.column("#10", width=70, stretch=False, anchor="center")
     
     show_all_guias()
-    
     tab_guias.add(frame_show_all_guias, text="Mostrar Guias")
-    
     
     focus_tab(tab_guias)
