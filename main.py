@@ -12,12 +12,12 @@ import guias, remesas, anexos, destinos, facturacion, config, ui
 # Crear la ventana principal
 #*****************BOOTSTRAP*******************#
 # root = tk.Tk()
-window = tk.Tk()
+# window = tk.Tk()
 # window = ttk.Window()
 # window = ttk.Window(themename="sandstone",)
 
 
-# window = ThemedTk(theme="radiance", )
+window = ThemedTk(theme="radiance", )
 screen_width = window.winfo_screenwidth()
 screen_height = window.winfo_screenheight()
 full_screen = f"{screen_width}x{screen_height}"
@@ -62,7 +62,7 @@ menu_facturacion.add_command(label="Buscar Factura", command=lambda: facturacion
 menu.add_cascade(label="Facturación", menu=menu_facturacion)
 
 menu_destinos = Menu(menu, tearoff=0)
-menu_destinos.add_command(label="Agregar Destino", command=lambda: destinos.show_destinos(main_frame, screen_width, screen_height))
+menu_destinos.add_command(label="Destinos y Tarifas", command=lambda: destinos.show_destinos(main_frame, screen_width, screen_height))
 # menu_destinos.add_command(label="Buscar Destino", command=lambda: destinos.show_destinos(main_frame, screen_width, screen_height))
 # menu_destinos.add_command(label="Total Destinos", command=lambda: destinos.show_destinos(main_frame, screen_width, screen_height))
 menu.add_cascade(label="Destinos", menu=menu_destinos)

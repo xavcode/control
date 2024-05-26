@@ -1,53 +1,84 @@
-import pandas as pd
+import glob
+from hmac import new
+from math import e
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+from tkinter import N, ttk, filedialog, messagebox
 import sqlite3
+from turtle import clear
+
 from config import load_config
 
 def show_destinos(frame, width, height, ):
     config = load_config()
     db_path = config['db_path']  # type: ignore
-    
-    # def focus_tab(tab):
-    #     tab.select(tab_to_show) 
+    destino_selected = None # used for update the sasme name of destination
     
     for widget in frame.winfo_children():
         widget.grid_forget()
-    def print_destinos():
-        # Connect to the SQLite database
-        conn = sqlite3.connect(db_path)
-        # Execute the query to fetch the destinations
-        query = "SELECT * FROM destinos ORDER BY destino ASC"
-        df = pd.read_sql_query(query, conn)
-        # Insert the data into the table
-        for index, row in df.iterrows():
-            treeview_destinos.insert("", "end", text="", values=tuple(row))  # type: ignore
-        conn.close()
+    def get_destinos():
+        try:
+            conn = sqlite3.connect(db_path)
+            query = "SELECT * FROM destinos ORDER BY destino ASC"
+            result = conn.execute(query)
+            data = result.fetchall()
+            if not data :
+                messagebox.showerror("", "no se encontraron destinos")
+                return
+            conn.close()
+            clean_table()
+            for row in data:                   
+                treeview_destinos.insert("", "end", text="", values=tuple(row))  # type: ignore
+            conn.close()            
+        except Exception as e:
+            messagebox.showerror("", f"Error al obtener los destinos: {str(e)}")
+        finally:
+            conn.close()
     def clean_table():
         for i in treeview_destinos.get_children():
             treeview_destinos.delete(i)
+    def clear_entries():
+        entry_destino.delete(0, tk.END)
+        entry_valor_destino_1.delete(0, tk.END)
+        entry_valor_destino_2.delete(0, tk.END)
+        entry_valor_destino_3.delete(0, tk.END)
+        entry_extra.delete(0, tk.END)
     def add_destino():
         # Get the values from the entry widgets
         destino = entry_destino.get().upper()
-        valor_1 = entry_valor_destino.get()
-        # valor_2 = entry_valor_2.get()
-        # valor_3 = entry_valor_3.get()
+        valor_1 = entry_valor_destino_1.get()
+        valor_2 = entry_valor_destino_2.get()
+        valor_3 = entry_valor_destino_3.get()
+        valor_extra = entry_extra.get()
+        if not destino:
+            messagebox.showerror("", "El destino no puede estar vacío")
+            return
+        if not valor_1:
+            messagebox.showerror("", "Ingrese minimo una tarifa ")
+            return
+        if not valor_1.isdigit() or int(valor_1) < 0:
+            messagebox.showerror("", "Ingrese un valor valido")
+            return
+        if (not valor_2.isdigit() or int(valor_2) < 0 )and not valor_2 == "":
+            messagebox.showerror("", "Ingrese un valor 2 valido")
+            return
+        if (not valor_3.isdigit() or int(valor_3) < 0) and not valor_2 == "":
+            messagebox.showerror("", "Ingrese un valor 3 valido")
+            return
+        if valor_2 == '': valor_2 = 0
+        if valor_3 == '': valor_3 = 0
+        if valor_extra == '': valor_extra = 0
         
-        # Connect to the SQLite database
-        connection = sqlite3.connect(db_path)
-        # Execute the query to insert the new destination
-        query = f"INSERT INTO destinos (destino, valor_destino_1) VALUES ('{destino}', '{valor_1}' )"
-        connection.execute(query)
-        connection.commit()
-        connection.close()
-        
-        # Clear the entry widgets
-        entry_destino.delete(0, tk.END)
-        entry_valor_destino.delete(0, tk.END)
-        # entry_valor_2.delete(0, tk.END)
-        # entry_valor_3.delete(0, tk.END)
-        clean_table()
-        print_destinos()
+        try:
+            connection = sqlite3.connect(db_path)            
+            query = f"INSERT INTO destinos (destino, valor_destino_1, valor_destino_2, valor_destino_3, extra) VALUES ('{destino}', {int(valor_1)}, {int(valor_2)}, {int(valor_3)},{int(valor_extra)})"
+            connection.execute(query)
+            connection.commit()
+            connection.close()
+            clear_entries()
+            clean_table()
+            get_destinos()
+        except Exception as e:
+            messagebox.showerror("", f"Error al agregar el destino: {str(e)}")
     def delete_destino():
         # Get the selected destination
         selected = treeview_destinos.selection()
@@ -55,71 +86,126 @@ def show_destinos(frame, width, height, ):
         if not selected:
             messagebox.showerror("Error", "Seleccione un destino para borrar")
             return
-        # Get the destination name
-        # Ask for confirmation before deleting the destination
-        confirmed = messagebox.askyesno("Confirmar", "¿Estás seguro de borrar el destino seleccionado?")
+        confirmed = messagebox.askyesno("Confirmar", f"¿Estás seguro de borrar el destino: {destino} ?")
         if not confirmed:
             return
         
-        # print(destino)
-        # Connect to the SQLite database
         connection = sqlite3.connect(db_path)
-        # Execute the query to delete the destination
-        query = f"DELETE FROM destinos WHERE destino = ?"
+        query = "DELETE FROM destinos WHERE destino = ?"
         result = connection.execute(query, (destino,))
         if result.rowcount != 0:
             messagebox.showerror("Error", "Se ha borrado el destino: " + destino)
         connection.commit()
         connection.close()
         clean_table()
-        print_destinos()
+        clear_entries()
+        get_destinos()
     def search_destino(destino):
         if not destino:
             messagebox.showerror("Error", "Ingrese un destino para buscar")
             return
-        # Connect to the SQLite database
-        connection = sqlite3.connect(db_path)
+        global destino_selected
+        destino_selected = destino
         try:            
+            connection = sqlite3.connect(db_path)
             connection = connection.cursor()
-            # Execute the query to search the destination
-            query = f'''
+            query = '''
                         SELECT * 
                         FROM destinos 
                         WHERE destino = ?
                         '''
-            result = connection.execute(query, (destino,))
-            
+            result = connection.execute(query,(destino,))
             entry_destino.delete(0, tk.END)
-            entry_valor_destino.delete(0, tk.END)
+            entry_valor_destino_1.delete(0, tk.END)
+            entry_valor_destino_2.delete(0, tk.END)
+            entry_valor_destino_3.delete(0, tk.END)
+            entry_extra.delete(0, tk.END)
+                            
             
             for row in result:
                 entry_destino.insert(0, row[0])
-                entry_valor_destino.insert(0, row[1])
-        except:
-            messagebox.showerror("Error", "No se ha encontrado el destino")        
-        connection.close()
+                entry_valor_destino_1.insert(0, row[1])
+                entry_valor_destino_2.insert(0, row[2])
+                entry_valor_destino_3.insert(0, row[3])
+                entry_extra.insert(0, row[4])
+        except sqlite3.Error as e:
+            messagebox.showerror("Error", f"No se ha podido buscar el destino {str(e)}" )
+            connection.close()
+        
+        finally:
+            connection.close()
     def update_destino(destino):
+        global destino_selected
         if not destino :
             messagebox.showerror("Error", "Ingrese un destino para actualizar")
             return
         # Get the values from the entry widgets
         destino = entry_destino.get().upper()
-        valor_destino = int(entry_valor_destino.get())
-        connection = sqlite3.connect(db_path)
+        valor_destino_2 = entry_valor_destino_2.get()
+        valor_destino_3 = entry_valor_destino_3.get()
+        valor_extra = entry_extra.get()        
+
+        #Validations
+
+        new_destino = entry_destino.get().upper()
+        if not new_destino:
+            messagebox.showerror("Error", "Ingrese un destino valido")
+            return
+
+        valor_destino_1 = entry_valor_destino_1.get()
+        if valor_destino_1 is None:
+            messagebox.showerror("Error", "Ingrese al menos una tarifa")
+            return
+        if not valor_destino_1.isdigit() or int(valor_destino_1) < 0:
+            messagebox.showerror("Error", "Ingrese un valor 1 valido")
+            return
+        
+        if valor_destino_2 == '':
+            valor_destino_2 = 0
+        elif not valor_destino_2.isdigit() or int(valor_destino_2) < 0:
+            messagebox.showerror("Error", "Ingrese un valor 2 valido")
+            return
+        
+        if valor_destino_3 == '':
+            valor_destino_3 = 0
+        elif not valor_destino_3.isdigit() or int(valor_destino_3) < 0: 
+            messagebox.showerror("Error", "Ingrese un valor 3 valido")
+            return
+
+        if valor_extra == '':
+            valor_extra = 0
+        elif not valor_extra.isdigit() or int(valor_extra) < 0: 
+            messagebox.showerror("Error", "Ingrese un valor extra valido")
+            return
+        
+        #Update query
         try:
+            connection = sqlite3.connect(db_path)
             cursor = connection.cursor()
-            query = '''UPDATE destinos
-                        SET valor_destino_1 = ?
-                        WHERE destino = ?'''
-            cursor.execute(query, (valor_destino, destino))
+            query = ''' 
+                        UPDATE destinos
+                        SET
+                        destino = ?, 
+                        valor_destino_1 = ?,
+                        valor_destino_2 = ?,
+                        valor_destino_3 = ?,
+                        extra = ?
+                        WHERE destino = ?
+                    '''
+            cursor.execute(query, (new_destino, valor_destino_1, valor_destino_2, valor_destino_3, valor_extra, destino_selected))
             connection.commit()  
-            messagebox.showinfo("Información", "Se ha actualizado el destino")
+            messagebox.showinfo("Información", f"Se ha actualizado el destino: {destino_selected} por: {destino}")
             clean_table()
-            print_destinos()
+            clear_entries()
+            get_destinos()
         except sqlite3.Error as e:
-            messagebox.showerror("Error", f"No se ha podido actualizar el destino {str(e)}" )
+            if "UNIQUE constraint failed" in str(e):
+                messagebox.showerror("Error", "Ya existe el destino")
+            else:
+                messagebox.showerror("Error", f"No se ha podido actualizar el destino {str(e)}" )
+                
         connection.close()
- 
+    
     parent = ttk.Frame(frame,width=1366, height=768)
     parent.grid(row=0, column=0, sticky="nswe")
     parent.grid_propagate(False)
@@ -133,16 +219,16 @@ def show_destinos(frame, width, height, ):
     frame_table_destinos.grid(row=0, column=0,  sticky="")
     
     # Create a treeview widget to display the destinations
-    treeview_destinos = ttk.Treeview(frame_table_destinos, columns=("destino", "valor",), show="headings", height=25, selectmode="browse")
+    list_camps = ("Destino", "Valor 1", "Valor 2", "Valor 3", "Extra")
+    treeview_destinos = ttk.Treeview(frame_table_destinos, columns=list_camps, show="headings", height=25, selectmode="browse")
     treeview_destinos.grid(row=1, column=0, sticky='nswe', padx=10, )
     
-    treeview_destinos.column("destino", width=220, stretch=False, anchor="center")
-    treeview_destinos.column("valor", width=120, stretch=False, anchor="center")
-
-    treeview_destinos.heading("destino", text="Destino")
-    treeview_destinos.heading("valor", text="Valor ")
+    for col in list_camps:
+        treeview_destinos.heading(col, text=col)
+        treeview_destinos.column(col, width=120, stretch=True, anchor="center")
+    treeview_destinos.column("#1", width=300, stretch=False, anchor="center")
     
-    treeview_destinos.bind("<ButtonRelease-1>", lambda e: search_destino(treeview_destinos.item(treeview_destinos.focus())["values"][0]))    
+    treeview_destinos.bind("<ButtonRelease-1>", lambda e: search_destino(treeview_destinos.item(treeview_destinos.focus())["values"][0]))
     
     scrollbar = ttk.Scrollbar(frame_table_destinos, orient="vertical", command=treeview_destinos.yview)
     treeview_destinos.configure(yscrollcommand=scrollbar.set)
@@ -152,27 +238,42 @@ def show_destinos(frame, width, height, ):
     frame_form_add_destinos.grid(row=0, column=1, padx=20, sticky="nswe")
     
     # Create labels and entry widgets for adding destinations and their values
-    label_destino = ttk.Label(frame_form_add_destinos, text="Destino:") 
-    label_destino.grid(row=0, column=0, padx=10, pady=5, sticky="e")
+    ttk.Label(frame_form_add_destinos, text="Destino:").grid(row=0, column=0, padx=10, pady=5, sticky="e")
     entry_destino = ttk.Entry(frame_form_add_destinos)
     entry_destino.grid(row=0, column=1, padx=10, pady=5)
 
-    label_valor_destino = ttk.Label(frame_form_add_destinos, text="Valor:")
-    label_valor_destino.grid(row=1, column=0, padx=10, pady=5, sticky="e")
-    entry_valor_destino = ttk.Entry(frame_form_add_destinos)
-    entry_valor_destino.grid(row=1, column=1, padx=10, pady=5)
+    ttk.Label(frame_form_add_destinos, text="Valor 1:").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+    entry_valor_destino_1 = ttk.Entry(frame_form_add_destinos)
+    entry_valor_destino_1.grid(row=1, column=1, padx=10, pady=5)
+
+    ttk.Label(frame_form_add_destinos, text="Valor 2:").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+    entry_valor_destino_2 = ttk.Entry(frame_form_add_destinos)
+    entry_valor_destino_2.grid(row=2, column=1, padx=10, pady=5)
+
+    ttk.Label(frame_form_add_destinos, text="Valor 3:").grid(row=3, column=0, padx=10, pady=5, sticky="e")
+    entry_valor_destino_3 = ttk.Entry(frame_form_add_destinos)
+    entry_valor_destino_3.grid(row=3, column=1, padx=10, pady=5)
+
+    ttk.Label(frame_form_add_destinos, text="Extra:").grid(row=4, column=0, padx=10, pady=5, sticky="e")
+    entry_extra = ttk.Entry(frame_form_add_destinos)
+    entry_extra.grid(row=4, column=1, padx=10, pady=5)
     
     btn_add_destino = ttk.Button(frame_form_add_destinos, text="Agregar Destino", command=add_destino)
-    btn_add_destino.grid(row=4, columnspan=2, padx=10, pady=10, sticky="we")
+    btn_add_destino.grid(row=5, columnspan=2, padx=10, pady=10, sticky="we")
 
-    btn_delete_destino = ttk.Button(frame_form_add_destinos, text="Borrar Destino", command= lambda: delete_destino())
-    btn_delete_destino.grid(row=5, columnspan=2, padx=10, pady=10, sticky="we")
+    btn_clear_entries = ttk.Button(frame_form_add_destinos, text="Limpiar", command=lambda:clear_entries())
+    btn_clear_entries.grid(row=6, columnspan=2, padx=10, pady=10, sticky="we")
     
-    btn_update_destino = ttk.Button(frame_form_add_destinos, text="Actualizar Destino", command= lambda: update_destino(entry_destino.get()))
-    btn_update_destino.grid(row=6, columnspan=2, padx=10, pady=10, sticky="we")
+    btn_delete_destino = ttk.Button(frame_form_add_destinos, text="Borrar Destino", command=lambda:delete_destino())
+    btn_delete_destino.grid(row=7, columnspan=2, padx=10, pady=10, sticky="we")
+
+    btn_update_destino = ttk.Button(frame_form_add_destinos, text="Actualizar Destino", command=lambda: update_destino(entry_destino.get()))
+    btn_update_destino.grid(row=8, columnspan=2, padx=10, pady=10, sticky="we") 
+
+    btn_aceptar = ttk.Button(frame_destinos, text="Aceptar")    
+    btn_aceptar.grid(row=5, column=0, padx=10, pady=10, sticky="")
+
     
-    btn_aceptar = ttk.Button(frame_destinos, text="Aceptar" )
-    btn_aceptar.grid(row=4, column=0, padx=10, pady=10, sticky="")  
-    
-    print_destinos()
-    # focus_tab()
+  
+
+    get_destinos()
