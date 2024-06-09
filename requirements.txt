@@ -1,7 +1,8 @@
 pandas
 pdfplumber
 PyPDF2
-tkcalendar
 openpyxl
 xlsxwriter
 configparser
+ttkbootstrap
+numpy

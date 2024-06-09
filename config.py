@@ -1,8 +1,9 @@
 from datetime import datetime
 import os
 import sqlite3
-from tkinter import messagebox, filedialog,ttk
+from tkinter import messagebox, filedialog
 from configparser import ConfigParser
+import ttkbootstrap as ttk
 
 # Función para cargar la configuración desde el archivo INI
 def load_config():
@@ -13,7 +14,6 @@ def load_config():
                 "", f"No se encontró el archivo de configuración{filepath} "
             )
             return
-        
         parser = ConfigParser()
         parser.read(filepath)
         db_path = parser.get('paths', 'db_path')
@@ -21,7 +21,9 @@ def load_config():
         tumaco_path = parser.get('paths', 'tumaco_path')
         remesas_path = parser.get('paths', 'remesas_path')
         facturas_path = parser.get('paths', 'facturas_path')
-        return {'db_path': db_path, 'pueblos_path': pueblos_path, 'tumaco_path': tumaco_path, 'remesas_path': remesas_path, 'facturas_path': facturas_path}
+        consecutives_remesas = parser.get('consecutives', 'remesas')
+        consecutives_manifiestos = parser.get('consecutives', 'manifiestos')
+        return {'db_path': db_path, 'pueblos_path': pueblos_path, 'tumaco_path': tumaco_path, 'remesas_path': remesas_path, 'facturas_path': facturas_path, 'consecutives': {'remesas': consecutives_remesas, 'manifiestos': consecutives_manifiestos}}
     except Exception as e:
         messagebox.showerror(
             "", f"Error al cargar la configuración: {e}"
@@ -39,11 +41,14 @@ def show_config(frame, width, height):
         parser.set('paths', 'tumaco_path', entry_tumaco.get())
         parser.set('paths', 'remesas_path', entry_remesas.get())
         parser.set('paths', 'facturas_path', entry_facturas.get())
+        parser.set('consecutives', 'remesas', entry_remesas_consecutives.get())
+        parser.set('consecutives', 'manifiestos', entry_manifiestos_consecutives.get())
         #save the config file
         with open('config.ini', 'w') as config_file:
             parser.write(config_file)
         
         messagebox.showinfo("", "Configuración guardada exitosamente")
+        load_config()
     # Función para seleccionar la base de datos
     def select_db():
         global config
@@ -98,123 +103,129 @@ def show_config(frame, width, height):
             entry_facturas.delete(0, 'end')
             entry_facturas.insert('end', folder_path)
             config['facturas_path'] = folder_path # type: ignore
-    
+    def save_consecutives():
+        global config
+        remesas = entry_remesas.get()
+        manifiestos = entry_manifiestos_consecutives.get()
+        if not remesas or not manifiestos:
+            messagebox.showerror("Error", "Debe ingresar los nombres de los remesas y manifiestos")
+            return
+        config['consecutives'] = {'remesas': remesas, 'manifiestos': manifiestos} # type: ignore
+        messagebox.showinfo("", "Consecutivos guardados exitosamente")
     for widget in frame.winfo_children():
         widget.grid_forget()
-
-    frame_config = ttk.LabelFrame(frame, text='Configuraciones',width=1366, height=768 )
-    frame_config.grid(row=0, column=0, )
+    
+    frame_config = ttk.LabelFrame(frame, text='Configuraciones',width=width, height=height )
+    frame_config.grid(row=0, column=0, padx=10, )
     frame_config.grid_propagate(False)
-    frame_config.grid_columnconfigure(0, weight=1)
+    frame_config.grid_columnconfigure(0, weight=2)
+    frame_config.grid_columnconfigure(1, weight=2)
+    
     frame_config.grid_rowconfigure(0, weight=1)
-    frame_config.grid_columnconfigure(1, weight=1)
     
     ##****-------------------PATHS------------------------****##
     
     frame_paths = ttk.LabelFrame(frame_config, text='Rutas'  )
-    frame_paths.grid(row=0, column=0, padx=20, sticky='nswe')
+    frame_paths.grid(row=0, column=0,  sticky='nswe', padx=10)
     
     # create a label for the btn config
     label = ttk.Label(frame_paths, text="Seleccionar Base de Datos", font=("Arial", 18))
-    label.grid(row=0, column=0, columnspan=2, padx=5, pady=10, sticky="nsew")
+    label.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
 
     entry_db = ttk.Entry(frame_paths) 
-    entry_db.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=20, pady=5 )
+    entry_db.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=10, pady=5 )
     entry_db.insert('end', config['db_path']) # type: ignore
     
     #clean the entry before insert the new path
     btn_db = ttk.Button(frame_paths, text="Seleccionar", command=lambda: select_db()) # type: ignore
-    btn_db.grid(row=1, column=2,  sticky="w", padx=5, pady=5)
+    btn_db.grid(row=2, column=1,  sticky="e", padx=10, pady=5)
     
-    #****-------------------------------------------------****#
+    # #****-------------------------------------------------****#
     
     separator = ttk.Separator(frame_paths, orient='horizontal')
-    separator.grid(row=3, column=0, columnspan=2, padx=5, sticky="ew", pady=10)    
+    separator.grid(row=3, column=0, columnspan=3, padx=5, sticky="ew", pady=10)    
     
-    label_tumaco = ttk.Label(frame_paths, text="Tumaco", font=("Arial", 18))
-    label_tumaco.grid(row=4, column=0, columnspan=2, pady=10, sticky="nsew")
-    
+    ttk.Label(frame_paths, text="Tumaco", font=("Arial", 18)).grid(row=4, column=0, columnspan=2, pady=10, padx=10, sticky="nsew")
     entry_tumaco = ttk.Entry(frame_paths)
-    entry_tumaco.grid(row=5, column=0, columnspan=2, sticky="nsew", padx=20, pady=5)
+    entry_tumaco.grid(row=5, column=0, columnspan=2, sticky="nsew", padx=10, pady=5)
     entry_tumaco.insert('end', config['tumaco_path']) # type: ignore
     
     btn_tumaco = ttk.Button(frame_paths, text="Seleccionar", command=lambda: save_tumaco_file()) # type: ignore
-    btn_tumaco.grid(row=5, column=2,  sticky="w", padx=5, pady=5)
+    btn_tumaco.grid(row=6, column=1,  sticky="e", padx=10, pady=5)
     
     #****-------------------------------------------------****#
     
-    separator2 = ttk.Separator(frame_paths, orient='horizontal')
-    separator2.grid(row=7, column=0, columnspan=2, sticky="ew", pady=15)
     
-    label_pueblos = ttk.Label(frame_paths, text="Pueblos", font=("Arial", 18))
-    label_pueblos.grid(row=8, column=0, columnspan=2, pady=10, sticky="nsew")
-    
+    ttk.Label(frame_paths, text="Pueblos", font=("Arial", 18)).grid(row=8, column=0, columnspan=2, pady=10, padx=10, sticky="nsew")
     entry_pueblos = ttk.Entry(frame_paths)
-    entry_pueblos.grid(row=9, column=0, columnspan=2, sticky="nsew", padx=20, pady=5)
+    entry_pueblos.grid(row=9, column=0, columnspan=2, sticky="nsew", padx=10, pady=5)
     entry_pueblos.insert('end', config['pueblos_path']) # type: ignore
-    
+
     btn_pueblos = ttk.Button(frame_paths, text="Seleccionar", command=lambda: save_pueblos_file()) # type: ignore
-    btn_pueblos.grid(row=9, column=2,  sticky="w", padx=5, pady=5)
-    
-    label_remesas = ttk.Label(frame_paths, text="Remesas", font=("Arial", 18))
-    label_remesas.grid(row=10, column=0, columnspan=2, pady=10, sticky="nsew")
-    
+    btn_pueblos.grid(row=10, column=1,  sticky="e", padx=10, pady=5)
+
+    #****-------------------------------------------------****#
+
+    ttk.Label(frame_paths, text="Remesas", font=("Arial", 18)).grid(row=11, column=0, columnspan=2, pady=10, padx=10, sticky="nsew")
     entry_remesas = ttk.Entry(frame_paths)
-    entry_remesas.grid(row=11, column=0, columnspan=2, sticky="nsew", padx=20, pady=5)
+    entry_remesas.grid(row=12, column=0, columnspan=2, sticky="nsew", padx=10, pady=5)
     entry_remesas.insert('end', config['remesas_path']) # type: ignore
-    
+
     btn_remesas = ttk.Button(frame_paths, text="Seleccionar", command=lambda: save_remesas_path()) # type: ignore
-    btn_remesas.grid(row=11, column=2,  sticky="w", padx=5, pady=5)
-    
-    label_facturas = ttk.Label(frame_paths, text="Facturas", font=("Arial", 18))
-    label_facturas.grid(row=12, column=0, columnspan=2, pady=10, sticky="nsew")
-    
+    btn_remesas.grid(row=13, column=1,  sticky="e", padx=10, pady=5)
+
+    #****-------------------------------------------------****#
+
+    ttk.Label(frame_paths, text="Facturas", font=("Arial", 18)).grid(row=14, column=0, columnspan=2, pady=10, padx=10, sticky="nsew")
     entry_facturas = ttk.Entry(frame_paths)
-    entry_facturas.grid(row=13, column=0, columnspan=2, sticky="nsew", padx=20, pady=5)
+    entry_facturas.grid(row=15, column=0, columnspan=2, sticky="nsew", padx=10, pady=5)
     entry_facturas.insert('end', config['facturas_path']) # type: ignore   
-    
+
     btn_facturas = ttk.Button(frame_paths, text="Seleccionar", command=lambda: save_facturas_path()) # type: ignore
-    btn_facturas.grid(row=13, column=2,  sticky="w", padx=5, pady=5)
-    
+    btn_facturas.grid(row=16, column=1,  sticky="e", padx=10, pady=5)
    
     ##****-------------------PATHS------------------------****##
-  
     
     ##****-------------------BACKUP------------------------****##
     
-    frame_backup = ttk.LabelFrame(frame_config, text='Backup'  )
-    frame_backup.grid(row=0, column=1, padx=20, sticky='nswe')
+    frame_others = ttk.Frame(frame_config)
+    frame_others.grid(row=0, column=1, sticky='nswe', )
+    frame_others.grid_columnconfigure(0, weight=1)
+    frame_others.grid_rowconfigure(0, weight=1)
+    frame_others.grid_rowconfigure(1, weight=1)
     
-    ttk.Label(frame_backup, text="Crear copia de seguridad", font=("Arial", 18)).grid(row=0, column=0, columnspan=2, padx=5, pady=10)
-    # entry_db_backup = ttk.Entry(frame_backup)
-    # entry_db_backup.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=20, pady=5 )
-    # entry_db_backup.insert('end', config['db_path']) # type: ignore
-    
-    btn_db_backup = ttk.Button(frame_backup, text="Crear copia", command=lambda: save_backup() ) # type: ignore
-    btn_db_backup.grid(row=1, column=0,  sticky="w", padx=5, pady=5)
+    frame_backup = ttk.LabelFrame(frame_others, text='Backup')
+    frame_backup.grid(row=0, column=0, sticky='nswe')    
+
+    ttk.Label(frame_backup, text="Crear copia de seguridad", font=("Arial", 18)).grid(row=0, column=0, columnspan=2, padx=10, pady=10)    
+    btn_db_backup = ttk.Button(frame_backup, text="Crear copia", command=lambda: save_backup() ) 
+    btn_db_backup.grid(row=1, column=0,  sticky="w", padx=10, pady=5)
     
      ##****-------------------BACKUP------------------------****##
+
+     ##****-------------------CONSECUTIVES------------------------****##
+
+    frame_consecutives = ttk.LabelFrame(frame_others, text='Consecutivos'  )
+    frame_consecutives.grid(row=1, column=0, sticky='nwse')
+   
+    ttk.Label(frame_consecutives, text="Consecutivos", font=("Arial", 18)).grid(row=0, column=0, pady=10, padx=10, sticky="w")
+
+    ttk.Label(frame_consecutives, text="REMESAS", font=("Arial", 10)).grid(row=1, column=0, sticky="w", padx=10, pady=5)
+    entry_remesas_consecutives = ttk.Entry(frame_consecutives)
+    entry_remesas_consecutives.grid(row=2, column=0, sticky="w", padx=10, pady=5)
+    entry_remesas_consecutives.insert('end', f"{config['consecutives']['remesas']}") # type: ignore
+
+    ttk.Label(frame_consecutives, text="MANIFIESTOS", font=("Arial", 10)).grid(row=1, column=1, sticky="w", padx=10, pady=5)
+    entry_manifiestos_consecutives = ttk.Entry(frame_consecutives)
+    entry_manifiestos_consecutives.grid(row=2, column=1, sticky="w", padx=10, pady=5)
+    entry_manifiestos_consecutives.insert('end', f"{config['consecutives']['manifiestos']}") # type: ignore
+
+    ##****-------------------CONSECUTIVES------------------------****##
     
     frame_btn_save = ttk.Frame(frame_config,)
-    frame_btn_save.grid(row=1, column=0, columnspan=2, pady=20, sticky='nsew')
+    frame_btn_save.grid(row=1, column=0, columnspan=2, pady=10, sticky='')
     frame_btn_save.grid_columnconfigure(0, weight=1)
     
     btn_save_changes = ttk.Button(frame_btn_save, text="Guardar Cambios", command=lambda: save_config())
-    btn_save_changes.grid(row=0, column=0, sticky="s")
+    btn_save_changes.grid(row=0, column=0, sticky="wes")
 
-
-#Consecutives
-    # label_consecutives = ttk.Label(frame_config, text="Consecutivos", font=("Arial", 18))
-    # label_consecutives.grid(row=4, column=0, pady=10)
-    
-    # label_letter = tk.Label(frame_config, text="Letras", font=("Arial", 10))
-    # label_letter.grid(row=5, column=0, sticky="w", padx=5, pady=5)
-    # letters_consecutives = ttk.Entry(frame_config)
-    # letters_consecutives.grid(row=6, column=0, sticky="w", padx=5, pady=5)
-    # letters_consecutives.insert('end', 'RTP-24')
-    
-    # label_numbers = ttk.Label(frame_config, text="Numeros", font=("Arial", 10))
-    # label_numbers.grid(row=5, column=1, sticky="w", padx=5, pady=5)
-    # numbers_consecutives = ttk.Entry(frame_config)
-    # numbers_consecutives.grid(row=6, column=1, sticky="w", padx=5, pady=5)
-    # numbers_consecutives.insert('end', '0001')

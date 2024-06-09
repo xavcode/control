@@ -6,7 +6,8 @@ import PyPDF2
 import re
 import sqlite3
 from config import load_config
-from tkinter import ttk, filedialog, messagebox
+from tkinter import filedialog, messagebox
+import ttkbootstrap as ttk
 
 def _convert_stringval(value):
     if hasattr(value, 'typename'):
@@ -25,7 +26,6 @@ def show_anexos(frame, tab_to_show, width, height,):
     def focus_tab(tab):
         tab.select(tab_to_show) 
     def extract_table():
-        
         full_table = []
         file_path = filedialog.askopenfilename(filetypes=[("PDF Files", "*.pdf")])
         if file_path:
@@ -96,7 +96,9 @@ def show_anexos(frame, tab_to_show, width, height,):
         
         for index, row in df.iterrows():
             values = [str(value) for value in row]
-            tree.insert("", "end", values=values)
+            values[5] = "{:,}".format(int(values[5]))
+            values[7] = "{:,}".format(int(values[7]))
+            tree.insert("", "end", values=values)        
             
         
         sum_items = int(df["UDS"].sum())
@@ -106,7 +108,7 @@ def show_anexos(frame, tab_to_show, width, height,):
 
         entry_total_unidades.insert(0, str(sum_items))
         entry_total_guias.insert(0, str(num_records))
-        entry_total_fte.insert(0, str(sum_fte))
+        entry_total_fte.insert(0, "{:,}".format(sum_fte))
 
         # Add sum_items and sum_fte to the dataframe
         df.loc["Blanck Space"] = ["", "", "", "", "", "", "", "", ""]
@@ -136,7 +138,7 @@ def show_anexos(frame, tab_to_show, width, height,):
         fecha = entry_fecha_anexo.get()
         total_unidades = entry_total_unidades.get()
         total_guias = entry_total_guias.get()
-        fte_total = entry_total_fte.get()
+        fte_total = entry_total_fte.get().replace(",", "")
 
         list_guias_to_insert = []
         try : 
@@ -165,8 +167,9 @@ def show_anexos(frame, tab_to_show, width, height,):
         #insert guias to anexos_guias
         query_anexos = "INSERT INTO anexos_guias (anexo_id, guia_id, destino, unds, peso, valor, tipo ) VALUES "
         for i in range(len(list_guias_to_insert)):
-            row = list_guias_to_insert[i]
-            query_anexos += f"('{id_anexo}', '{row[0]}', '{row[1]}', {row[2]}, {row[3]}, {row[4]}, '{row[5]}' )"
+            row = list(list_guias_to_insert[i])
+            row[4]=row[4].replace(",", "")
+            query_anexos += f"('{id_anexo}', '{row[0]}', '{row[1]}', {row[2]}, {row[3]}, {(row[4])}, '{row[5]}' )"
                   
             if i != len(list_guias_to_insert) - 1:
                 query_anexos += ", "
@@ -215,24 +218,25 @@ def show_anexos(frame, tab_to_show, width, height,):
         clean_anexos()
         clean_detail()
         get_anexos()
-    
     for widget in frame.winfo_children():
         widget.grid_forget()    
-    
         
-    tab_anexos = ttk.Notebook(frame, width=1366, height=768)
-    tab_anexos.grid(row=0, column=0, sticky="nswe",)
+    tab_anexos = ttk.Notebook(frame, bootstyle="secondary", width=width, height=height) # type: ignore
+    tab_anexos.grid(row=0, column=0, sticky="nswe")
+
     tab_anexos.grid_propagate(False)
     tab_anexos.grid_columnconfigure(0, weight=1)
     tab_anexos.grid_rowconfigure(0, weight=1)
     
     frame_anexos = ttk.Frame(tab_anexos, )
-    frame_anexos.grid(row=0, column=0, sticky="snwe", padx= 20,)
+    frame_anexos.grid(row=0, column=0, sticky="snwe", padx= 10, pady=20)
     frame_anexos.grid_columnconfigure(0, weight=1)
-    # frame_anexos.grid_rowconfigure(0, weight=1)
+    frame_anexos.grid_rowconfigure(0, weight=0)
+    frame_anexos.grid_rowconfigure(1, weight=1)
+    frame_anexos.grid_rowconfigure(2, weight=0)
     
-    tree = ttk.Treeview(frame_anexos, height=20, show="headings", selectmode="browse")
-    tree.grid(row=1, column=0, columnspan=4, sticky="we", padx=10, pady=10)
+    tree = ttk.Treeview(frame_anexos, show="headings", selectmode="browse")
+    tree.grid(row=1, column=0, columnspan=4, sticky="wens", padx=10, pady=10)
 
     # Define columns
     tree["columns"] = ( "GUIA", "PRODUCTO", "DESTINO", "UDS", "PESO", "FTE FIJO", "FTE VARIABLE", "FTE TOTAL", "TIPO", )
@@ -260,7 +264,7 @@ def show_anexos(frame, tab_to_show, width, height,):
     tree.heading("TIPO", text="TIPO")
 
     # Add a scrollbar to the treeview
-    scrollbar = ttk.Scrollbar(frame_anexos, orient="vertical", command=tree.yview)
+    scrollbar = ttk.Scrollbar(frame_anexos, bootstyle = 'primary-round', orient="vertical", command=tree.yview) # type: ignore
     scrollbar.grid(row=1, column=4, sticky="ns")
     tree.configure(yscrollcommand=scrollbar.set)
 
@@ -318,7 +322,10 @@ def show_anexos(frame, tab_to_show, width, height,):
         query = "SELECT id_anexo, fecha_anexo, total_unidades, total_guias, fte_total FROM anexos ORDER BY id_anexo DESC;"
         result = connection.execute(query).fetchall()
         for row in result:
-            tree_search.insert("", "end", values=row)
+            row_list = list(row)
+            row_list[4] = "{:,}".format(int(row_list[4]))
+            
+            tree_search.insert("", "end", values=row_list)
         # Close the database connection
         connection.close()
     def clean_detail():
@@ -358,7 +365,9 @@ def show_anexos(frame, tab_to_show, width, height,):
                 messagebox.showerror("", f"No se encontró el anexo {id_anexo}")
                 return
             for row in result:
-                tree_detail.insert("", "end", values=row)
+                row_list = list(row)
+                row_list[5] = "{:,}".format(int(row_list[5]))
+                tree_detail.insert("", "end", values=row_list)
         except Exception as e:
             messagebox.showerror("", f"Error al obtener las guias del anexo: {str(e)}")            
         
@@ -379,7 +388,9 @@ def show_anexos(frame, tab_to_show, width, height,):
                                 '''
             resultado = connection.execute(query_summary_anexo).fetchall()
             for row in resultado:
-                tree_anexo_summary.insert("", "end", values=row)
+                row_list = list(row)
+                row_list[2] = "{:,}".format(int(row_list[2]))
+                tree_anexo_summary.insert("", "end", values=row_list)
         except Exception as e:
             messagebox.showerror("", f"Error al obtener datos del anexo: {str(e)}")
             connection.close()
@@ -396,25 +407,73 @@ def show_anexos(frame, tab_to_show, width, height,):
         entry_search_anexo.delete(0, tk.END)
         entry_search_anexo.insert(0, id_anexo)   
     def btnsearch_anexos(id_anexo):
-        id_anexo = entry_search_anexo.get()
+        id_anexo = entry_search_anexo.get().strip()
         clean_detail()
         clean_anexo_summary()
         get_detail_anexo(id_anexo)
+    def get_guia_detail(id_guia):
+        if not id_guia:
+            messagebox.showerror("", "Ingrese un guia")
+            return
+        try: 
+            connection = sqlite3.connect(db_path)
+            query_show_guia = f'''                                   
+                                SELECT DISTINCT
+                                rg.remesa_id, 
+                                ag.anexo_id, 
+                                ag.destino, 
+                                COALESCE(ag.unds, 'SIN GUIA') AS unds,
+                                COALESCE(ag.peso, 'SIN GUIA') AS peso,
+                                ag.valor,
+                                ag.tipo
+                                FROM anexos_guias AS ag
+                                LEFT JOIN remesas_guias as rg USING (guia_id)
+                                WHERE ag.guia_id = '{id_guia}'
+                                '''
+            result = connection.execute(query_show_guia).fetchall()
+            if not result:
+                messagebox.showerror("", f"No se encontró la guia {id_guia}")
+                return
+            
+            list_entries = [entry_remesa, entry_anexo, entry_destino, entry_unidades, entry_peso, entry_valor]
+            for entry in list_entries:
+                entry.config(state="normal")
+                entry.delete(0, tk.END)
+
+            for row in result:
+                entry_remesa.insert(0, row[0])
+                entry_anexo.insert(0, row[1])
+                entry_destino.insert(0, row[2])
+                entry_unidades.insert(0, row[3])
+                entry_peso.insert(0, row[4])
+                entry_valor.insert(0, "{:,}".format(row[5]))
+
+            for entry in list_entries:
+                entry.config(state="readonly")
+            connection.close()
+        except Exception as e:
+            messagebox.showerror("", f"Error al obtener la guia: {str(e)}")
+            connection.close()
+        finally:
+            connection.close()
+
     #Create the search frame
     frame_search_anexos = ttk.Frame(tab_anexos)
     frame_search_anexos.grid(row=0, column=0, sticky="wens", )
     frame_search_anexos.grid_columnconfigure(0, weight=1)
     frame_search_anexos.grid_columnconfigure(1, weight=1)
-        
+    frame_search_anexos.grid_rowconfigure(0, weight=1)
+    frame_search_anexos.grid_rowconfigure(1, weight=0)
     
+        
     frame_anexo_selected = ttk.Frame(frame_search_anexos)
-    frame_anexo_selected.grid(row=0, column=0, padx=10, pady=10, sticky="we")
+    frame_anexo_selected.grid(row=0, column=0, padx=10, pady=10, sticky="nswe")
     frame_anexo_selected.grid_columnconfigure(0, weight=1)
     frame_anexo_selected.grid_rowconfigure(0, weight=1)
     
     # Create the detail treeview
-    tree_search = ttk.Treeview(frame_anexo_selected, height=20, show="headings", selectmode="browse")
-    tree_search.grid(row=0, column=0, columnspan=4, sticky="swen", padx=10, pady=10)
+    tree_search = ttk.Treeview(frame_anexo_selected, height=25, show="headings", selectmode="browse")
+    tree_search.grid(row=0, column=0, columnspan=6, sticky="nswe", padx=10, pady=10)
 
     # Define columns
     tree_search["columns"] = ("ID Anexo", "Fecha Anexo", "Total Unidades", "Total Guias", "FTE Total")
@@ -439,32 +498,75 @@ def show_anexos(frame, tab_to_show, width, height,):
     # tree_search.bind("<Double-1>", on_double_click)
 
     # Add a scrollbar to the treeview
-    scrollbar_detail = ttk.Scrollbar(frame_anexo_selected, orient="vertical", command=tree_search.yview)
+    scrollbar_detail = ttk.Scrollbar(frame_anexo_selected, bootstyle = 'primary-round', orient="vertical", command=tree_search.yview) # type: ignore
     scrollbar_detail.grid(row=0, column=4, sticky="ns")
     tree_search.configure(yscrollcommand=scrollbar_detail.set)
     
     frame_search_anexos_info = ttk.Frame(frame_search_anexos)
-    frame_search_anexos_info.grid(row=1, column=0, padx=10, pady=10, sticky="nw")
-    
+    frame_search_anexos_info.grid(row=1, column=0, padx=10, pady=10, sticky="nswe")        
+    # Create the search anexo section
+
+    entry_remesa= ttk.Entry(frame_search_anexos_info, state="readonly")
+    entry_remesa.grid(row=3, column=1, padx=5, pady=5, sticky="we",)
+    entry_remesa.config(justify="center")
+    ttk.Label(frame_search_anexos_info, text="Remesa:").grid(row=4, column=1, padx=5, pady=5, sticky="")
+
+    entry_anexo = ttk.Entry(frame_search_anexos_info, state="readonly")
+    entry_anexo.grid(row=3, column=2, padx=5, pady=5, sticky="we") 
+    entry_anexo.config(justify="center")
+    ttk.Label(frame_search_anexos_info, text="Anexo:").grid(row=4, column=2, padx=5, pady=5, sticky="")
+
+    entry_destino = ttk.Entry(frame_search_anexos_info, state="readonly")
+    entry_destino.grid(row=3, column=3, padx=5, pady=5, sticky="we")
+    entry_destino.config(justify="center")
+    ttk.Label(frame_search_anexos_info, text="Destino:").grid(row=4, column=3, padx=5, pady=5, sticky="")
+
+    entry_unidades = ttk.Entry(frame_search_anexos_info, state="readonly")
+    entry_unidades.grid(row=3, column=4, padx=5, pady=5, sticky="we")
+    entry_unidades.config(justify="center")
+    ttk.Label(frame_search_anexos_info, text="Uds:").grid(row=4, column=4, padx=5, pady=5, sticky="")
+
+    entry_peso = ttk.Entry(frame_search_anexos_info, state="readonly")
+    entry_peso.grid(row=3, column=5, padx=5, pady=5, sticky="we")
+    entry_peso.config(justify="center")
+    ttk.Label(frame_search_anexos_info, text="Peso:").grid(row=4, column=5, padx=5, pady=5, sticky="")
+
+    entry_valor = ttk.Entry(frame_search_anexos_info, state="readonly")
+    entry_valor.grid(row=3, column=6, padx=5, pady=5, sticky="we")
+    entry_valor.config(justify="center")
+    ttk.Label(frame_search_anexos_info, text="Valor:", justify='center').grid(row=4, column=6, padx=5, pady=5, sticky="", )
+
     label_search = ttk.Label(frame_search_anexos_info, text="Anexo:")
-    label_search.grid(row=1, column=0, padx=5, pady=5)
+    label_search.grid(row=1, column=0, padx=5, pady=5, sticky="")
 
-    # Create the search entry
     entry_search_anexo = ttk.Entry(frame_search_anexos_info)
-    entry_search_anexo.grid(row=1, column=1, padx=5, pady=5)
+    entry_search_anexo.grid(row=1, column=1, padx=5, pady=5, sticky="we")
+    entry_search_anexo.config(justify="center")
+    entry_search_anexo.bind("<Return>", lambda event: btnsearch_anexos(entry_search_anexo.get().strip()))
 
-    # Create the search button
     btn_search = ttk.Button(frame_search_anexos_info, text="Buscar", command= lambda: btnsearch_anexos(entry_search_anexo.get()))
-    btn_search.grid(row=1, column=2, padx=5, pady=5)
+    btn_search.grid(row=1, column=2, padx=5, pady=5, sticky="we")
     
-    btn_delete = ttk.Button(frame_search_anexos_info, text="Borrar Anexo", command= lambda: delete_anexo())
-    btn_delete.grid(row=1, column=3, padx=5, pady=5)
+    btn_delete = ttk.Button(frame_search_anexos_info, text="Elminar Anexo", style='Danger', command= lambda: delete_anexo())
+    btn_delete.grid(row=1, column=3, padx=5, pady=5, sticky="we")
+    
+    # Create the search guias section
+
+    ttk.Label(frame_search_anexos_info, text="Guia:").grid(row=2, column=0, padx=5, pady=5, sticky="")
+
+    entry_search_guia = ttk.Entry(frame_search_anexos_info)
+    entry_search_guia.grid(row=2, column=1, padx=5, pady=5, sticky="we")
+    entry_search_guia.config(justify="center")
+    entry_search_guia.bind("<Return>", lambda event: get_guia_detail(entry_search_guia.get().strip()))
+
+    btn_search_guia = ttk.Button(frame_search_anexos_info, text="Buscar", command= lambda: get_guia_detail(entry_search_guia.get()))
+    btn_search_guia.grid(row=2, column=2, padx=5, pady=5, sticky="we")
     
     frame_cant_remesas = ttk.Frame(frame_search_anexos)
     frame_cant_remesas.grid(row=1, column=1, padx=10, pady=10, sticky="we")
     
     label_remesas = ttk.Label(frame_cant_remesas, text="Remesas en el anexo: ")
-    label_remesas.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+    label_remesas.grid(row=0, column=0, padx=10, pady=5, sticky="we")
     
     list_camps = ("Remesa", "Guias", "Valor")
     tree_anexo_summary = ttk.Treeview(frame_cant_remesas, columns=list_camps, height=7, show="headings", selectmode="browse")
@@ -474,23 +576,22 @@ def show_anexos(frame, tab_to_show, width, height,):
         tree_anexo_summary.heading(col, text=col)
         tree_anexo_summary.column(col, width=100, stretch=True, anchor="center")
     
-    scrollbar_summary = ttk.Scrollbar(frame_cant_remesas, orient="vertical", command=tree_anexo_summary.yview)
+    scrollbar_summary = ttk.Scrollbar(frame_cant_remesas, bootstyle = 'primary-round', orient="vertical", command=tree_anexo_summary.yview) # type: ignore
     scrollbar_summary.grid(row=1, column=1, sticky="ns")
     tree_anexo_summary.configure(yscrollcommand=scrollbar_summary.set)
-    
     
 #********************************************************************************************************************    
 #****************************************DETAIL_SIDE_ANEXOS**********************************************************    
 #********************************************************************************************************************
     
     frame_detail = ttk.Frame(frame_search_anexos)
-    frame_detail.grid(row=0, column=1, padx=10, pady=10, sticky="we")
+    frame_detail.grid(row=0, column=1, padx=10, pady=10, sticky="nswe")
     frame_detail.grid_columnconfigure(0, weight=1)
+    frame_detail.grid_rowconfigure(0, weight=1)
 
     # Create the detail treeview
-    tree_detail = ttk.Treeview(frame_detail, height=20, show="headings", selectmode="browse", name="tree_detail", style="Custom.Treeview")
+    tree_detail = ttk.Treeview(frame_detail, height=25, show="headings",  selectmode="browse", name="tree_detail")
     tree_detail.grid(row=0, column=0, columnspan=4, sticky="nswe", padx=10, pady=10)
-    
 
     # Define columns
     tree_detail["columns"] = ("guia", "remesa", "destino","unidades", "peso", "valor", "tipo")
@@ -503,7 +604,6 @@ def show_anexos(frame, tab_to_show, width, height,):
     tree_detail.column("peso", width=50, anchor="center")
     tree_detail.column("valor", width=80, anchor="center")
     tree_detail.column("tipo", width=80, anchor="center")
-    
 
     # Create headings
     tree_detail.heading("guia", text="Guia")
@@ -513,10 +613,9 @@ def show_anexos(frame, tab_to_show, width, height,):
     tree_detail.heading("peso", text="Peso")
     tree_detail.heading("valor", text="FTE Total")
     tree_detail.heading("tipo", text="Tipo")
-    
 
     # Add a scrollbar to the treeview
-    scrollbar_detail = ttk.Scrollbar(frame_detail, orient="vertical", command=tree_detail.yview)
+    scrollbar_detail = ttk.Scrollbar(frame_detail, bootstyle = 'primary-round', orient="vertical", command=tree_detail.yview) # type: ignore
     scrollbar_detail.grid(row=0, column=4, sticky="ns")
     tree_detail.configure(yscrollcommand=scrollbar_detail.set)
     

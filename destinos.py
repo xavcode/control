@@ -1,10 +1,8 @@
-import glob
-from hmac import new
-from math import e
+
 import tkinter as tk
-from tkinter import N, ttk, filedialog, messagebox
+from tkinter import  messagebox
 import sqlite3
-from turtle import clear
+import ttkbootstrap as ttk
 
 from config import load_config
 
@@ -27,7 +25,12 @@ def show_destinos(frame, width, height, ):
             conn.close()
             clean_table()
             for row in data:                   
-                treeview_destinos.insert("", "end", text="", values=tuple(row))  # type: ignore
+                row_list = list(row)
+                row_list[1] = "{:,}".format(int(row_list[1]))
+                row_list[2] = "{:,}".format(int(row_list[2]))
+                row_list[3] = "{:,}".format(int(row_list[3]))
+                row_list[4] = "{:,}".format(int(row_list[4]))                                
+                treeview_destinos.insert("", "end", text="", values=row_list) 
             conn.close()            
         except Exception as e:
             messagebox.showerror("", f"Error al obtener los destinos: {str(e)}")
@@ -49,6 +52,7 @@ def show_destinos(frame, width, height, ):
         valor_2 = entry_valor_destino_2.get()
         valor_3 = entry_valor_destino_3.get()
         valor_extra = entry_extra.get()
+        
         if not destino:
             messagebox.showerror("", "El destino no puede estar vacío")
             return
@@ -64,9 +68,12 @@ def show_destinos(frame, width, height, ):
         if (not valor_3.isdigit() or int(valor_3) < 0) and not valor_2 == "":
             messagebox.showerror("", "Ingrese un valor 3 valido")
             return
-        if valor_2 == '': valor_2 = 0
-        if valor_3 == '': valor_3 = 0
-        if valor_extra == '': valor_extra = 0
+        if valor_2 == '':
+            valor_2 = 0
+        if valor_3 == '':
+            valor_3 = 0
+        if valor_extra == '':
+            valor_extra = 0
         
         try:
             connection = sqlite3.connect(db_path)            
@@ -115,23 +122,20 @@ def show_destinos(frame, width, height, ):
                         WHERE destino = ?
                         '''
             result = connection.execute(query,(destino,))
-            entry_destino.delete(0, tk.END)
-            entry_valor_destino_1.delete(0, tk.END)
-            entry_valor_destino_2.delete(0, tk.END)
-            entry_valor_destino_3.delete(0, tk.END)
-            entry_extra.delete(0, tk.END)
-                            
             
+            list_entries = [entry_destino, entry_valor_destino_1, entry_valor_destino_2, entry_valor_destino_3, entry_extra]
+            for i in range(len(list_entries)):
+                list_entries[i].delete(0, tk.END)
+                        
             for row in result:
                 entry_destino.insert(0, row[0])
-                entry_valor_destino_1.insert(0, row[1])
-                entry_valor_destino_2.insert(0, row[2])
-                entry_valor_destino_3.insert(0, row[3])
-                entry_extra.insert(0, row[4])
+                entry_valor_destino_1.insert(0, (row[1]))
+                entry_valor_destino_2.insert(0, (row[2]))
+                entry_valor_destino_3.insert(0, (row[3]))
+                entry_extra.insert(0, (row[4]))
         except sqlite3.Error as e:
             messagebox.showerror("Error", f"No se ha podido buscar el destino {str(e)}" )
             connection.close()
-        
         finally:
             connection.close()
     def update_destino(destino):
@@ -194,7 +198,7 @@ def show_destinos(frame, width, height, ):
                     '''
             cursor.execute(query, (new_destino, valor_destino_1, valor_destino_2, valor_destino_3, valor_extra, destino_selected))
             connection.commit()  
-            messagebox.showinfo("Información", f"Se ha actualizado el destino: {destino_selected} por: {destino}")
+            messagebox.showinfo("Información", f"Se ha actualizado el destino: {destino_selected}")
             clean_table()
             clear_entries()
             get_destinos()
@@ -205,23 +209,29 @@ def show_destinos(frame, width, height, ):
                 messagebox.showerror("Error", f"No se ha podido actualizar el destino {str(e)}" )
                 
         connection.close()
-    
-    parent = ttk.Frame(frame,width=1366, height=768)
-    parent.grid(row=0, column=0, sticky="nswe")
+    parent = ttk.Frame(frame,width=width, height=height)
+    parent.grid(row=0, column=0, padx=10, pady=10, sticky="nswe")
     parent.grid_propagate(False)
     parent.grid_rowconfigure(0, weight=1)
     parent.grid_columnconfigure(0, weight=1)
     
     frame_destinos = ttk.Frame(parent) 
-    frame_destinos.grid(row=0, column=0, sticky="")
-
+    frame_destinos.grid(row=0, column=0, sticky="nswe")
+    frame_destinos.grid_columnconfigure(0, weight=1)
+    frame_destinos.grid_columnconfigure(1, weight=1)
+    frame_destinos.grid_rowconfigure(0, weight=1)
+    frame_destinos.grid_rowconfigure(1, weight=0)
+    frame_destinos.grid_rowconfigure(2, weight=0)
+  
     frame_table_destinos = ttk.Frame(frame_destinos)
-    frame_table_destinos.grid(row=0, column=0,  sticky="")
+    frame_table_destinos.grid(row=0, column=0,  sticky="wesn")
+    frame_table_destinos.grid_columnconfigure(0, weight=1)
+    frame_table_destinos.grid_rowconfigure(0, weight=1)
     
     # Create a treeview widget to display the destinations
     list_camps = ("Destino", "Valor 1", "Valor 2", "Valor 3", "Extra")
     treeview_destinos = ttk.Treeview(frame_table_destinos, columns=list_camps, show="headings", height=25, selectmode="browse")
-    treeview_destinos.grid(row=1, column=0, sticky='nswe', padx=10, )
+    treeview_destinos.grid(row=0, column=0, sticky='nswe', padx=10, )
     
     for col in list_camps:
         treeview_destinos.heading(col, text=col)
@@ -230,32 +240,32 @@ def show_destinos(frame, width, height, ):
     
     treeview_destinos.bind("<ButtonRelease-1>", lambda e: search_destino(treeview_destinos.item(treeview_destinos.focus())["values"][0]))
     
-    scrollbar = ttk.Scrollbar(frame_table_destinos, orient="vertical", command=treeview_destinos.yview)
+    scrollbar = ttk.Scrollbar(frame_table_destinos, bootstyle= 'primary-round', orient="vertical", command=treeview_destinos.yview) # type: ignore
     treeview_destinos.configure(yscrollcommand=scrollbar.set)
-    scrollbar.grid(row=1, column=2, sticky="ns")
+    scrollbar.grid(row=0, column=2, sticky="ns")
     
     frame_form_add_destinos = ttk.Frame(frame_destinos, relief="groove", borderwidth=1)
-    frame_form_add_destinos.grid(row=0, column=1, padx=20, sticky="nswe")
+    frame_form_add_destinos.grid(row=0, column=1, padx=10, sticky="nw")
     
     # Create labels and entry widgets for adding destinations and their values
     ttk.Label(frame_form_add_destinos, text="Destino:").grid(row=0, column=0, padx=10, pady=5, sticky="e")
-    entry_destino = ttk.Entry(frame_form_add_destinos)
+    entry_destino = ttk.Entry(frame_form_add_destinos, justify='center')
     entry_destino.grid(row=0, column=1, padx=10, pady=5)
 
     ttk.Label(frame_form_add_destinos, text="Valor 1:").grid(row=1, column=0, padx=10, pady=5, sticky="e")
-    entry_valor_destino_1 = ttk.Entry(frame_form_add_destinos)
+    entry_valor_destino_1 = ttk.Entry(frame_form_add_destinos, justify='center')
     entry_valor_destino_1.grid(row=1, column=1, padx=10, pady=5)
 
     ttk.Label(frame_form_add_destinos, text="Valor 2:").grid(row=2, column=0, padx=10, pady=5, sticky="e")
-    entry_valor_destino_2 = ttk.Entry(frame_form_add_destinos)
+    entry_valor_destino_2 = ttk.Entry(frame_form_add_destinos, justify='center')
     entry_valor_destino_2.grid(row=2, column=1, padx=10, pady=5)
 
     ttk.Label(frame_form_add_destinos, text="Valor 3:").grid(row=3, column=0, padx=10, pady=5, sticky="e")
-    entry_valor_destino_3 = ttk.Entry(frame_form_add_destinos)
+    entry_valor_destino_3 = ttk.Entry(frame_form_add_destinos, justify='center')
     entry_valor_destino_3.grid(row=3, column=1, padx=10, pady=5)
 
     ttk.Label(frame_form_add_destinos, text="Extra:").grid(row=4, column=0, padx=10, pady=5, sticky="e")
-    entry_extra = ttk.Entry(frame_form_add_destinos)
+    entry_extra = ttk.Entry(frame_form_add_destinos, justify='center')
     entry_extra.grid(row=4, column=1, padx=10, pady=5)
     
     btn_add_destino = ttk.Button(frame_form_add_destinos, text="Agregar Destino", command=add_destino)
@@ -269,11 +279,4 @@ def show_destinos(frame, width, height, ):
 
     btn_update_destino = ttk.Button(frame_form_add_destinos, text="Actualizar Destino", command=lambda: update_destino(entry_destino.get()))
     btn_update_destino.grid(row=8, columnspan=2, padx=10, pady=10, sticky="we") 
-
-    btn_aceptar = ttk.Button(frame_destinos, text="Aceptar")    
-    btn_aceptar.grid(row=5, column=0, padx=10, pady=10, sticky="")
-
-    
-  
-
     get_destinos()

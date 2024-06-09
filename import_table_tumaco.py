@@ -100,7 +100,7 @@ def import_remesa_from_excel():
                         rentabilidad)
                         VALUES ('{id_remesa}', '{manifiesto}', '{conductor}', '{destino}', '{formated_date}', {uds_sum}, {kg_sum}, {0}, {cobro_sum}, {valor_sum}, {valor_sum}, {0}, {0}, {0});
                     '''
-            print(query)
+            # print(query)
             cursor.execute(query)
             for guia in guias:
                 cursor.execute(f"INSERT INTO remesas_guias (remesa_id, guia_id, valor) VALUES ('{id_remesa}', '{guia[0]}', {guia[6]}) ")
