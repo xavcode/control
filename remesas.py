@@ -8,7 +8,7 @@ from config import load_config
 from pandas import ExcelWriter
 from datetime import datetime
 from tkinter import *   # type: ignore # noqa: F403
-from tkinter import messagebox,filedialog
+from tkinter import messagebox
 from tkinter import ttk as ttks
 import ttkbootstrap as ttk
 

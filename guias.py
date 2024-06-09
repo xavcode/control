@@ -244,34 +244,12 @@ def show_guias(frame, tab_to_show, width, height):
     for widget in frame.winfo_children():
         widget.grid_forget()
     
-    tab_guias = ttk.Notebook(frame, width=1366, height=768)
-    tab_guias.grid(row=0, column=0, padx=10, pady=10, sticky="nswe")
+    tab_guias = ttk.Notebook(frame, width=width, height=height)
+    tab_guias.grid(row=0, column=0, sticky="nswe")
     tab_guias.grid_propagate(False)
     tab_guias.columnconfigure(0, weight=1)
     tab_guias.rowconfigure(0, weight=1)
     
-    ##************************************************************
-    ##*********************** TAB GUIAS **************************
-    ##************************************************************
-    
-    frame_search_guias = ttk.Frame(tab_guias,   )
-    frame_search_guias.grid(row=0, column=0, sticky="snwe" )
-    frame_search_guias.grid_columnconfigure(0, weight=1)
-   
-    frame_buscar_guias = ttk.Frame(frame_search_guias,)
-    frame_buscar_guias.grid( row=2, column=0, sticky='we', )    
-    
-    ttk.Label(frame_buscar_guias, text="Buscar Guías", font=("Arial", 16)).grid(row=0, column=0, columnspan=2, padx=10, pady=10 )
-    ttk.Label(frame_buscar_guias, text="Ingrese Guía:").grid(row=1, column=0, padx=10, sticky="w")    
-   
-    entry_search_guia = ttk.Entry(frame_buscar_guias, justify='center')
-    entry_search_guia.grid(row=1, column=1, sticky="w", padx=10, pady=10,)
-    entry_search_guia.bind("<Return>", lambda event: search_button.invoke())
-
-    search_button = ttk.Button(frame_buscar_guias,text="Buscar", command=lambda: search_guia(entry_search_guia.get().strip()))
-    search_button.grid(row=2, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
-
-    tab_guias.add(frame_search_guias, text="Buscar Guia",) 
     
     ##************************************************************
     ##*******************TAB ADD GUIAS ***************************
@@ -296,7 +274,6 @@ def show_guias(frame, tab_to_show, width, height):
 
 # Configuración inicial de las columnas
   
-
     # Configuración inicial de las columnas
 
     for i in range(6):
@@ -400,6 +377,33 @@ def show_guias(frame, tab_to_show, width, height):
     btn_clean.grid(row=0, column=1, sticky="w", padx=10, pady=5)
     
     tab_guias.add(frame_add_guias, text="Agregar Guias")
+
+
+    ##************************************************************
+    ##*********************** TAB GUIAS **************************
+    ##************************************************************
+    
+    frame_search_guias = ttk.Frame(tab_guias,   )
+    frame_search_guias.grid(row=0, column=0, sticky="snwe" )
+    frame_search_guias.grid_columnconfigure(0, weight=1)
+   
+    frame_buscar_guias = ttk.Frame(frame_search_guias,)
+    frame_buscar_guias.grid( row=2, column=0, sticky='we', )    
+    
+    ttk.Label(frame_buscar_guias, text="Buscar Guías", font=("Arial", 16)).grid(row=0, column=0, columnspan=2, padx=10, pady=10 )
+    ttk.Label(frame_buscar_guias, text="Ingrese Guía:").grid(row=1, column=0, padx=10, sticky="w")    
+   
+    entry_search_guia = ttk.Entry(frame_buscar_guias, justify='center')
+    entry_search_guia.grid(row=1, column=1, sticky="w", padx=10, pady=10,)
+    entry_search_guia.bind("<Return>", lambda event: search_button.invoke())
+
+    search_button = ttk.Button(frame_buscar_guias,text="Buscar", command=lambda: search_guia(entry_search_guia.get().strip()))
+    search_button.grid(row=2, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
+
+    tab_guias.add(frame_search_guias, text="Buscar Guia",) 
+    
+
+
     
     ##************************************************************
     ##*****************TAB SHOW ALL GUIAS************************
@@ -432,5 +436,5 @@ def show_guias(frame, tab_to_show, width, height):
     
     show_all_guias()
     tab_guias.add(frame_show_all_guias, text="Mostrar Guias")
-    
+  
     focus_tab(tab_guias)

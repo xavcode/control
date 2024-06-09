@@ -8,7 +8,6 @@ from pandas import ExcelWriter
 from tkinter import * # type: ignore
 from tkinter import messagebox
 
-import tree
 from config import load_config
 import ttkbootstrap as ttk
 
@@ -451,7 +450,7 @@ def show_facturacion(frame, tab_to_show, width, height,):
     tab_facturacion.grid_columnconfigure(0, weight=1)
     tab_facturacion.grid_rowconfigure(0, weight=1)
 
-    frame_facturacion = ttk.LabelFrame(tab_facturacion, )
+    frame_facturacion = ttk.Frame(tab_facturacion, )
     frame_facturacion.grid(row=0, column=0, sticky='nsew')
     frame_facturacion.grid_columnconfigure(0, weight=1)
     frame_facturacion.grid_rowconfigure(0, weight=1)
@@ -695,13 +694,6 @@ def show_facturacion(frame, tab_to_show, width, height,):
                 if treeview_facturas.item(item, "values")[0] == factura_id:
                     treeview_facturas.selection_set(item)                    
                     treeview_facturas.see(item)
-
-            # list_guias = table_list_guias.get_children()
-            #     for item in list_guias:
-            #         if table_list_guias.item(item, "values")[0] == id_remesa:
-            #             table_list_guias.selection_set(item)                    
-            #             table_list_guias.see(item)
-            
         except Exception as e:
             messagebox.showinfo("", f"No se encuentra la factura: {str(e)}")
         connection.close()

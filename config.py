@@ -23,7 +23,9 @@ def load_config():
         facturas_path = parser.get('paths', 'facturas_path')
         consecutives_remesas = parser.get('consecutives', 'remesas')
         consecutives_manifiestos = parser.get('consecutives', 'manifiestos')
-        return {'db_path': db_path, 'pueblos_path': pueblos_path, 'tumaco_path': tumaco_path, 'remesas_path': remesas_path, 'facturas_path': facturas_path, 'consecutives': {'remesas': consecutives_remesas, 'manifiestos': consecutives_manifiestos}}
+        theme = parser.get('theme', 'actual_theme')
+        return {'db_path': db_path, 'pueblos_path': pueblos_path, 'tumaco_path': tumaco_path, 'remesas_path': remesas_path, 'facturas_path': facturas_path, 'theme': theme, 'consecutives': {'remesas': consecutives_remesas, 'manifiestos': consecutives_manifiestos}}
+    
     except Exception as e:
         messagebox.showerror(
             "", f"Error al cargar la configuración: {e}"
@@ -32,7 +34,6 @@ def load_config():
 
 config = load_config()
 def show_config(frame, width, height):
-    
     def save_config():
         parser = ConfigParser()
         parser.read('config.ini')
@@ -43,7 +44,7 @@ def show_config(frame, width, height):
         parser.set('paths', 'facturas_path', entry_facturas.get())
         parser.set('consecutives', 'remesas', entry_remesas_consecutives.get())
         parser.set('consecutives', 'manifiestos', entry_manifiestos_consecutives.get())
-        #save the config file
+        parser.set('theme', 'actual_theme')
         with open('config.ini', 'w') as config_file:
             parser.write(config_file)
         
