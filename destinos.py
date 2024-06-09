@@ -231,12 +231,12 @@ def show_destinos(frame, width, height, ):
     # Create a treeview widget to display the destinations
     list_camps = ("Destino", "Valor 1", "Valor 2", "Valor 3", "Extra")
     treeview_destinos = ttk.Treeview(frame_table_destinos, columns=list_camps, show="headings", height=25, selectmode="browse")
-    treeview_destinos.grid(row=0, column=0, sticky='nswe', padx=10, )
+    treeview_destinos.grid(row=0, column=0, sticky='nse', padx=10, )
     
     for col in list_camps:
         treeview_destinos.heading(col, text=col)
         treeview_destinos.column(col, width=120, stretch=True, anchor="center")
-    treeview_destinos.column("#1", width=300, stretch=False, anchor="center")
+    treeview_destinos.column("#1", width=300, stretch=True, anchor="center")
     
     treeview_destinos.bind("<ButtonRelease-1>", lambda e: search_destino(treeview_destinos.item(treeview_destinos.focus())["values"][0]))
     
