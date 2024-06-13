@@ -66,55 +66,55 @@ def show_anexos(frame, tab_to_show, width, height,):
                         df = pd.DataFrame(full_table)
                         df = df.dropna(axis="columns", how="all")
                         
-        # set names to columns            
-        df.columns = [ "GUIA", "PRODUCTO", "DESTINO", "UDS", "PESO", "FTE FIJO", "FTE VARIABLE", "FTE TOTAL", "TIPO",]
-        
-        #setting types to columns
-        df["GUIA"] = df["GUIA"].astype(str)
+            df.columns = [ "GUIA", "PRODUCTO", "DESTINO", "UDS", "PESO", "FTE FIJO", "FTE VARIABLE", "FTE TOTAL", "TIPO",]
+            # set names to columns            
+            
+            #setting types to columns
+            df["GUIA"] = df["GUIA"].astype(str)
 
-        # Antes de convertir a numérico, elimina los puntos de los números que representan miles
-        df['FTE FIJO'] = df['FTE FIJO'].str.replace('.', '').astype(float)
-        df['FTE VARIABLE'] = df['FTE VARIABLE'].str.replace('.', '').astype(float)
-        df['FTE TOTAL'] = df['FTE TOTAL'].str.replace('.', '').astype(float)
+            # Antes de convertir a numérico, elimina los puntos de los números que representan miles
+            df['FTE FIJO'] = df['FTE FIJO'].str.replace('.', '').astype(float)
+            df['FTE VARIABLE'] = df['FTE VARIABLE'].str.replace('.', '').astype(float)
+            df['FTE TOTAL'] = df['FTE TOTAL'].str.replace('.', '').astype(float)
 
-        # Ahora puedes convertir a enteros o dejarlos como flotantes si así lo prefieres
-        df['FTE FIJO'] = df['FTE FIJO'].astype(int)
-        df['FTE VARIABLE'] = df['FTE VARIABLE'].astype(int)
-        df['FTE TOTAL'] = df['FTE TOTAL'].astype(int)
+            # Ahora puedes convertir a enteros o dejarlos como flotantes si así lo prefieres
+            df['FTE FIJO'] = df['FTE FIJO'].astype(int)
+            df['FTE VARIABLE'] = df['FTE VARIABLE'].astype(int)
+            df['FTE TOTAL'] = df['FTE TOTAL'].astype(int)
 
 
-        df[["UDS", "FTE FIJO", "PESO", "FTE VARIABLE", "FTE TOTAL"]] = df[
-            ["UDS", "FTE FIJO", "PESO", "FTE VARIABLE", "FTE TOTAL"]
-        ].apply(pd.to_numeric, errors="coerce")
-                
-        
-        df[["FTE FIJO", "FTE TOTAL", "FTE VARIABLE"]] = df[["FTE FIJO", "FTE TOTAL", "FTE VARIABLE"]].astype(int)
-        
-        # Clear the treeview before inserting data
-        
-        
-        
-        for index, row in df.iterrows():
-            values = [str(value) for value in row]
-            values[5] = "{:,}".format(int(values[5]))
-            values[7] = "{:,}".format(int(values[7]))
-            tree.insert("", "end", values=values)        
+            df[["UDS", "FTE FIJO", "PESO", "FTE VARIABLE", "FTE TOTAL"]] = df[
+                ["UDS", "FTE FIJO", "PESO", "FTE VARIABLE", "FTE TOTAL"]
+            ].apply(pd.to_numeric, errors="coerce")
+                    
+            
+            df[["FTE FIJO", "FTE TOTAL", "FTE VARIABLE"]] = df[["FTE FIJO", "FTE TOTAL", "FTE VARIABLE"]].astype(int)
+            
+            # Clear the treeview before inserting data
             
         
-        sum_items = int(df["UDS"].sum())
-        sum_fte = int((df["FTE TOTAL"]).sum())
-        # sum_kg = (df["PESO"]).sum()
-        num_records = int(len(df))
+        
+            for index, row in df.iterrows():
+                values = [str(value) for value in row]
+                values[5] = "{:,}".format(int(values[5]))
+                values[7] = "{:,}".format(int(values[7]))
+                tree.insert("", "end", values=values)        
+            
+        
+            sum_items = int(df["UDS"].sum())
+            sum_fte = int((df["FTE TOTAL"]).sum())
+            # sum_kg = (df["PESO"]).sum()
+            num_records = int(len(df))
 
-        entry_total_unidades.insert(0, str(sum_items))
-        entry_total_guias.insert(0, str(num_records))
-        entry_total_fte.insert(0, "{:,}".format(sum_fte))
+            entry_total_unidades.insert(0, str(sum_items))
+            entry_total_guias.insert(0, str(num_records))
+            entry_total_fte.insert(0, "{:,}".format(sum_fte))
 
-        # Add sum_items and sum_fte to the dataframe
-        df.loc["Blanck Space"] = ["", "", "", "", "", "", "", "", ""]
-        df.loc["Sum Items"] = ["","","","","","","","TOTAL GUIAS",num_records, ]
-        df.loc["Total Unidades"] = ["","","","","","","","TOTAL UNIDADES",sum_items,]
-        df.loc["Sum Values"] = ["", "", "", "", "", "", "", "VALOR TOTAL", sum_fte]
+            # Add sum_items and sum_fte to the dataframe
+            df.loc["Blanck Space"] = ["", "", "", "", "", "", "", "", ""]
+            df.loc["Sum Items"] = ["","","","","","","","TOTAL GUIAS",num_records, ]
+            df.loc["Total Unidades"] = ["","","","","","","","TOTAL UNIDADES",sum_items,]
+            df.loc["Sum Values"] = ["", "", "", "", "", "", "", "VALOR TOTAL", sum_fte]
 
         return df 
     def export_pdf():
@@ -180,7 +180,9 @@ def show_anexos(frame, tab_to_show, width, height,):
             result = connection.execute(query_anexos)
             connection.commit()
         except Exception as e:
-            messagebox.showerror("", f"Error al guardar las guias del anexo: {str(e)}")
+            if "incomplete input" in str(e):
+                messagebox.showerror("", "Seleccione un anexo: ")
+                return
         
         connection.close()
         clean_table_show_anexos()

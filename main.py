@@ -1,18 +1,18 @@
+from cProfile import label
 from configparser import ConfigParser
 from tkinter import *
-from tkinter.ttk import Separator # type: ignore
-
-from requests import get
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
+import tkinter as tk
 
-# from ttkthemes import ThemedTk
+
 import guias
 import remesas
 import anexos
 import destinos
 import facturacion
 import config
+from home import show_home
 
 def change_theme(theme):
     try:
@@ -26,6 +26,7 @@ def change_theme(theme):
     except Exception as e:
         print(f"Error al cambiar el tema: {e}")
 
+
 from config import load_config
 get_config = load_config()
 theme = get_config['theme'] # type: ignore
@@ -38,18 +39,21 @@ window = ttk.Window(themename=theme)
 screen_width = window.winfo_screenwidth()
 screen_height = window.winfo_screenheight()
 full_screen = f"{screen_width}x{screen_height}"
-
+window.grid_columnconfigure(0, weight=1)
+window.grid_rowconfigure(0, weight=1)
+window.config(background='red')
+window.configure(background='red')
 
 window.title("Control Guias y Facturacion Intermodal")
 window.geometry(full_screen)
+window.title("Control Guias y Facturacion Intermodal")
+window.iconbitmap('assets/faviconV2.ico')
 window.state('zoomed')
-# window.grid_columnconfigure(0, weight=1)
-# window.grid_rowconfigure(0, weight=1)
-
 ##********** MENU **********##
 
 menu = ttk.Menu(window, )
 menu_archivo = ttk.Menu(menu, tearoff=0)
+menu_archivo.add_command(label="Inicio", command=lambda: show_home(main_frame, screen_width, screen_height))
 menu_archivo.add_command(label="Salir", command=window.quit)
 menu.add_cascade(label="Archivo", menu=menu_archivo)
 
@@ -105,23 +109,14 @@ for theme in list_dark_themes:
     dark_themes.add_radiobutton(label=theme, variable=theme_var, value=theme, command=lambda t=theme: change_theme(t))
 menu_temas.add_cascade(label="Temas oscuros", menu=dark_themes)
 
-
 window.config(menu=menu)
 
-window.grid_columnconfigure(0, weight=1)
-window.grid_rowconfigure(0, weight=1)
-
-main_frame = ttk.Frame(window,   )
+main_frame = tk.Frame(window,    )
 main_frame.grid(row=0, column=0, sticky="nsew")
 main_frame.grid_columnconfigure(0, weight=1)
 main_frame.grid_rowconfigure(0, weight=1)
 
-
-# image_path = "assets/intermodal_hero.png"
-# image = tk.PhotoImage(file=image_path)
-# label = ttk.Label(main_frame, image=image)
-# label.grid(row=0, column=0, columnspan=3, rowspan=3, sticky="")
-
+guias.show_guias(main_frame,0, screen_width, screen_height)
 
 if __name__ == "__main__":
     window.mainloop()

@@ -558,7 +558,7 @@ def show_facturacion(frame, tab_to_show, width, height,):
     entry_total_factura = ttk.Entry(frame_totals)
     entry_total_factura.grid(row=0, column=1,  padx=5, pady=5, sticky='w')
     
-    frame_search_single_factura = ttk.Frame(frame_crear_factura)
+    frame_search_single_factura = ttk.LabelFrame(frame_crear_factura, text='Editar Factura')
     frame_search_single_factura.grid(row=4, column=0, padx=5, pady=5, sticky='w')
     
     entry_search_single_factura = ttk.Entry(frame_search_single_factura, width=16, justify='center')
@@ -580,7 +580,7 @@ def show_facturacion(frame, tab_to_show, width, height,):
     btn_exportar_factura = ttk.Button(frame_buttons, text='Exportar Factura', command= lambda: exportar_factura_excel())
     btn_exportar_factura.grid(row=0, column=1, padx=5, pady=5, sticky='we')
     
-    btn_nueva_factura = ttk.Button(frame_buttons, text='Nueva Factura', command= lambda: clean_treeview_guias())
+    btn_nueva_factura = ttk.Button(frame_buttons, text='Nueva Factura', command= lambda: [clean_treeview_guias(), clean_treeview_summary_anexos()])
     btn_nueva_factura.grid(row=0, column=2, padx=5, pady=5, sticky='we')
     
     tab_facturacion.add(frame_facturacion, text='Agregar Factura')
@@ -590,8 +590,8 @@ def show_facturacion(frame, tab_to_show, width, height,):
     #***********************************TAB-SEARCH-REMESAS*************************************************************
     
     def get_facturas():
-        connection = sqlite3.connect(db_path)
         try:
+            connection = sqlite3.connect(db_path)
             query_get_facturas = '''
                                     SELECT * FROM facturas
                                     ORDER BY 

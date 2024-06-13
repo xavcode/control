@@ -44,7 +44,6 @@ def show_config(frame, width, height):
         parser.set('paths', 'facturas_path', entry_facturas.get())
         parser.set('consecutives', 'remesas', entry_remesas_consecutives.get())
         parser.set('consecutives', 'manifiestos', entry_manifiestos_consecutives.get())
-        parser.set('theme', 'actual_theme')
         with open('config.ini', 'w') as config_file:
             parser.write(config_file)
         

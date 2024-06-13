@@ -243,15 +243,10 @@ def show_remesas(frame, tab_to_show, width, height):
             table_add_guia.delete(*selected_item)  
         calc_total()
         calc_gans()
-    def calc_utilidad():        
+    def calc_utilidad():
         total_ingreso = int(entry_ingreso_operativo_total.get().replace(",", ""))
-        if "," in str(total_ingreso):
-            total_gasto = int(entry_gasto_operativo.get().replace(",", ""))
-        else:
-            total_gasto = int(entry_gasto_operativo.get())
-            
+        total_gasto = int(entry_gasto_operativo.get().replace(",", ""))
         total_utilidad = total_ingreso - total_gasto
-        
         if total_utilidad < 1:
             total_utilidad = 0
         entry_utilidad.state(["!readonly"])
@@ -354,7 +349,7 @@ def show_remesas(frame, tab_to_show, width, height):
                 messagebox.showerror("", f"Ya existe la remesa: {id_remesa}")
             connection.close() 
         connection.close() 
-        entry_editar_remesa.delete(0, tk.END)
+        # entry_editar_remesa.delete(0, tk.END)
         get_latest_remesa()
     def delete_remesa(id_remesa):
         try:
@@ -603,10 +598,12 @@ def show_remesas(frame, tab_to_show, width, height):
             df = pd.read_excel(file_path, header=None)
             get_remesa(df)   
     def export_remesa():
-        if not entry_id_remesa.get():
+        id_remesa = entry_id_remesa.get()
+        manifiesto = entry_manifiesto.get()
+        if not id_remesa:
             messagebox.showerror("", "Ingrese un número de remesa")
             return
-        if not entry_manifiesto.get():
+        if not manifiesto:
             messagebox.showerror("", "Ingrese un número de manifiesto")
             return
         
@@ -614,17 +611,29 @@ def show_remesas(frame, tab_to_show, width, height):
             messagebox.showerror("", "No se han agregado guias a la remesa")
             return
         
-        # file_location = config['remesas_path'] # type: ignore
-        # file_name = f"{entry_id_remesa.get()}.xlsx"
-        # file_path = filedialog.asksaveasfilename(initialdir=file_location, initialfile=file_name, filetypes=[("Excel Files", "*.xlsx")])
-        
-        file_location = config['remesas_path'] # type: ignore
-        file_name = f"{entry_id_remesa}.xlsx"
+        file_location = config['remesas_path'] # type: ignore # 
+        file_name = f"{id_remesa}_Conductor.xlsx" #type: ignore
         file_path = os.path.join(file_location, file_name)
+        print(file_path)
         if not os.path.exists(file_location):
             os.makedirs(file_location)
+
+    #    if os.path.exists(file_path):
+    #         file_name, file_extension = os.path.splitext(file_path)
+    #         file_number = 1
+    #         new_file = f"{file_name}_{file_number}{file_extension}"
+    #         while os.path.exists(new_file):
+    #             file_number += 1
+    #             new_file = f"{file_name}_{file_number}{file_extension}"
+    #         file = new_file
+    #         os.rename(file_path, new_file)                  
+    #         os.startfile(file)                       
+    #         messagebox.showinfo("", f"Remesa {id_remesa} exportada con éxito")
+    #     else :
+    #         file = file_path
+    #         os.startfile(file)
+    #         messagebox.showinfo("", f"Remesa {id_remesa} exportada con éxito")
     
-        
         if file_path:
         # Create a DataFrame from the table_add_guia
             data_remesa = []
@@ -704,9 +713,8 @@ def show_remesas(frame, tab_to_show, width, height):
                 file = file_path
                 os.startfile(file)
                 messagebox.showinfo("", f"Remesa {id_remesa} exportada con éxito")
-
-
             os.startfile(file_path)
+
     def search_remesas_edit(id_remesa):
         if not id_remesa:
             messagebox.showerror("", "Ingrese un número de remesa")
@@ -1070,7 +1078,7 @@ def show_remesas(frame, tab_to_show, width, height):
     btn_import_remesa = ttk.Button(frame_buttons, text="Importar Remesa", command= lambda: import_remesa_from_app())
     btn_import_remesa.grid(row=4, column=0, sticky='w', padx=(0,5), pady=10)
     
-    btn_export_remesa = ttk.Button(frame_buttons, text="Exportar Remesa Cond", command= lambda: export_remesa())
+    btn_export_remesa = ttk.Button(frame_buttons, text="Exportar Reemesa Cond", command= lambda: export_remesa())
     btn_export_remesa.grid(row=4, column=1, sticky='w', padx=5, pady=10)
     
     btn_nueva_remesa = ttk.Button(frame_buttons, text="Nueva Remesa", command= lambda: new_remesa())
@@ -1109,9 +1117,9 @@ def show_remesas(frame, tab_to_show, width, height):
         search_remesa(id_remesa)
         search_guias_remesa(id_remesa)
     def search_guias_remesa(id_remesa):
-        if not id_remesa:
-            messagebox.showerror("", "Ingrese un número de remesa")
-            return
+        # if not id_remesa:
+        #     messagebox.showerror("", "Ingrese un número de remesa")
+        #     return
         try:
             connection = sqlite3.connect(db_path)
             query = f'''
@@ -1190,67 +1198,69 @@ def show_remesas(frame, tab_to_show, width, height):
         finally:
             connection.close()
     def btnsearch_remesa(id_remesa):        
-        if id_remesa:
             search_remesa(id_remesa)
             search_guias_remesa(id_remesa)               
-        else:
-            messagebox.showerror("Error", "Por favor, ingrese un ID de remesa")    
     def search_remesa(id_remesa):  
+        if not id_remesa:
+            messagebox.showerror("", "Ingrese una remesa")
+            return
         #function to enable entries for editing  
-        entries = [entryid_remesa, entrymanifiesto, entryconductor, entrydestino, entryfecha, entrytotal_kg, entrytotal_uds, entrytotal_volumen, entryflete_coord_rtp, entryingreso_operativo_total, entrygasto_operativo, entryutilidad, entryrentabilidad]
-        
         def entries_state_enabled():               
             for entry in entries:
                 entry.state(["!readonly"])
-        
         def entries_state_disabled():
             for entry in entries:
                 entry.state(["readonly"])    
-        
         def entries_state_clear():
             for entry in entries:
                 entry.delete(0, tk.END)
+        entries = [entryid_remesa, entrymanifiesto, entryconductor, entrydestino, entryfecha, entrytotal_kg, entrytotal_uds, entrytotal_volumen, entryflete_coord_rtp, entryingreso_operativo_total, entrygasto_operativo, entryutilidad, entryrentabilidad]
         
-        connection = sqlite3.connect(db_path)
+        try:
+            connection = sqlite3.connect(db_path)
+            query = f'''
+                        SELECT DISTINCT r.id_remesa,
+                        r.manifiesto, r.conductor, 
+                        d.destino, r.fecha, r.total_kg, 
+                        r.total_uds, total_vol, r.flete_coord_rtp, r.ingreso_operativo_total, 
+                        r. gasto_operativo, r.utilidad, r.rentabilidad 
+                        FROM remesas AS r JOIN destinos  AS d ON d.destino = r.destino 
+                        WHERE id_remesa = '{id_remesa}';       
+                        '''
+            result = connection.execute(query)
+            data = result.fetchall() 
+            connection.close()                
         
-        query = f'''
-                    SELECT DISTINCT r.id_remesa,
-                    r.manifiesto, r.conductor, 
-                    d.destino, r.fecha, r.total_kg, 
-                    r.total_uds, total_vol, r.flete_coord_rtp, r.ingreso_operativo_total, 
-                    r. gasto_operativo, r.utilidad, r.rentabilidad 
-                    FROM remesas AS r JOIN destinos  AS d ON d.destino = r.destino 
-                    WHERE id_remesa = '{id_remesa}';       
-                    '''
-        result = connection.execute(query)
-        data = result.fetchall() 
-        connection.close()                
-       
-        btn_delete_remesa = ttk.Button(frame_search_single_remesa, text="Eliminar", style='Danger',command= lambda: delete_remesa(entryid_remesa.get()) )
-        btn_delete_remesa.grid(row=1, column=5, sticky="w", padx=5, )            
-    
-        entries_state_enabled()
-        entries_state_clear()
-        entryid_remesa.insert(0, data[0][0])
-        entrymanifiesto.insert(0, data[0][1])
-        entryconductor.insert(0, data[0][2])
-        entrydestino.insert(0, data[0][3])
-        entryfecha.insert(0, data[0][4])
-        entrytotal_kg.insert(0, data[0][5])
-        entrytotal_uds.insert(0, data[0][6])
-        entrytotal_volumen.insert(0, data[0][7])
-        entryflete_coord_rtp.insert(0, "{:,}".format(data[0][8]))
-        entryingreso_operativo_total.insert(0, "{:,}".format(data[0][9]))
-        entrygasto_operativo.insert(0, "{:,}".format(data[0][10]))
-        entryutilidad.insert(0,"{:,}".format(data[0][11]))
-        entryrentabilidad.insert(0,str(data[0][12]))
-        entries_state_disabled()
+            if not data:
+                messagebox.showerror("", f"No se encontró la remesa: {id_remesa}")
+                return
+            btn_delete_remesa = ttk.Button(frame_search_single_remesa, text="Eliminar", style='Danger',command= lambda: delete_remesa(entryid_remesa.get()) )
+            btn_delete_remesa.grid(row=1, column=5, sticky="w", padx=5, )            
+        
+            entries_state_enabled()
+            entries_state_clear()
+            entryid_remesa.insert(0, data[0][0])
+            entrymanifiesto.insert(0, data[0][1])
+            entryconductor.insert(0, data[0][2])
+            entrydestino.insert(0, data[0][3])
+            entryfecha.insert(0, data[0][4])
+            entrytotal_kg.insert(0, data[0][5])
+            entrytotal_uds.insert(0, data[0][6])
+            entrytotal_volumen.insert(0, data[0][7])
+            entryflete_coord_rtp.insert(0, "{:,}".format(data[0][8]))
+            entryingreso_operativo_total.insert(0, "{:,}".format(data[0][9]))
+            entrygasto_operativo.insert(0, "{:,}".format(data[0][10]))
+            entryutilidad.insert(0,"{:,}".format(data[0][11]))
+            entryrentabilidad.insert(0,str(data[0][12]))
+            entries_state_disabled()
 
-        list_guias = table_list_guias.get_children()
-        for item in list_guias:
-            if table_list_guias.item(item, "values")[0] == id_remesa:
-                table_list_guias.selection_set(item)                    
-                table_list_guias.see(item)
+            list_remesas = table_list_remesas.get_children()
+            for item in list_remesas:
+                if table_list_remesas.item(item, "values")[0] == id_remesa:
+                    table_list_remesas.selection_set(item)                    
+                    table_list_remesas.see(item)
+        except Exception as e:
+            messagebox.showerror("", f"Error al buscar la remesa: {str(e)}")
     def export_remesa_to_factura(id_remesa):
         remesa, manifiesto, conductor, fecha = '', '', '', ''
         total_kg, total_uds, ingreso_operativo_total, cobro_total = 0,0,0,0
@@ -1562,9 +1572,9 @@ def show_remesas(frame, tab_to_show, width, height):
     hscrollbar2.grid(row=1, column=0, columnspan=2, sticky="we")
     table_list_guias.configure(xscrollcommand=hscrollbar2.set)
         
-    entry_export_remesa_factura = ttk.Entry(frame_search_single_remesa)
+    entry_export_remesa_factura = ttk.Entry(frame_search_single_remesa, justify="center")
     entry_export_remesa_factura.grid(row=1, column=6, padx=5, pady=5, )
-    btn_export_remesa_factura = ttk.Button(frame_search_single_remesa, text="Exportar Remesa Int", command= lambda: export_remesa_to_factura(entry_export_remesa_factura.get().strip()) )
+    btn_export_remesa_factura = ttk.Button(frame_search_single_remesa, text="Exportar Remesa Fact", command= lambda: export_remesa_to_factura(entry_export_remesa_factura.get().strip()) )
     btn_export_remesa_factura.grid(row=1, column=5, padx=(140,5), pady=5)
     
     tabs_remesas.add(frame_search_remesa, text="Buscar Remesa")
