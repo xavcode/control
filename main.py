@@ -47,11 +47,11 @@ window.configure(background='red')
 window.title("Control Guias y Facturacion Intermodal")
 window.geometry(full_screen)
 window.title("Control Guias y Facturacion Intermodal")
-window.iconbitmap('assets/faviconV2.ico')
+# window.iconbitmap(r'\assets\faviconV2.ico')
 window.state('zoomed')
 ##********** MENU **********##
 
-menu = ttk.Menu(window, )
+menu = ttk.Menu(window,)
 menu_archivo = ttk.Menu(menu, tearoff=0)
 menu_archivo.add_command(label="Inicio", command=lambda: show_home(main_frame, screen_width, screen_height))
 menu_archivo.add_command(label="Salir", command=window.quit)

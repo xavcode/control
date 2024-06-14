@@ -8,7 +8,7 @@ import ttkbootstrap as ttk
 # Función para cargar la configuración desde el archivo INI
 def load_config():
     try:    
-        filepath = r'D:\javier\proyectos\PYTHON\control_intermodal\control\config.ini'   
+        filepath = 'config.ini'   
         if  not os.path.exists(filepath):
             messagebox.showerror(
                 "", f"No se encontró el archivo de configuración{filepath} "

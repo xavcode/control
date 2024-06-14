@@ -1,8 +1,6 @@
 import os
 import tkinter as tk
 import sqlite3
-
-import colors
 import pandas as pd
 from config import load_config
 from pandas import ExcelWriter
@@ -11,6 +9,7 @@ from tkinter import *   # type: ignore # noqa: F403
 from tkinter import messagebox
 from tkinter import ttk as ttks
 import ttkbootstrap as ttk
+
 
 def _convert_stringval(value):
     if hasattr(value, 'typename'):
@@ -714,7 +713,6 @@ def show_remesas(frame, tab_to_show, width, height):
                 os.startfile(file)
                 messagebox.showinfo("", f"Remesa {id_remesa} exportada con éxito")
             os.startfile(file_path)
-
     def search_remesas_edit(id_remesa):
         if not id_remesa:
             messagebox.showerror("", "Ingrese un número de remesa")
@@ -939,7 +937,7 @@ def show_remesas(frame, tab_to_show, width, height):
     for i in range(8):
         frame_form_remesa.grid_columnconfigure(i, weight=1)
 
-    ttk.Label(frame_form_remesa, text="Remesa: (RTP)", anchor="e").grid(row=1, column=0, sticky="e", padx=10)
+    ttk.Label(frame_form_remesa, text="Remesa: (RTP)", anchor="e", font=("Shanti", 16)).grid(row=1, column=0, sticky="e", padx=10)
     entry_id_remesa = ttk.Entry(frame_form_remesa)
     entry_id_remesa.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 
@@ -1019,7 +1017,7 @@ def show_remesas(frame, tab_to_show, width, height):
     table_add_guia.configure(yscrollcommand=vscrollbar.set)
     
     # if the balance is != 0, the row will be colored in yellow
-    table_add_guia.tag_configure("has_cobro", background=colors.bg_has_cobro)
+    table_add_guia.tag_configure("has_cobro", )
     table_add_guia.column("#0", width=0, stretch=False, anchor="center")
     
     #*  FRAME GUIAS!!!!
@@ -1224,7 +1222,7 @@ def show_remesas(frame, tab_to_show, width, height):
                         d.destino, r.fecha, r.total_kg, 
                         r.total_uds, total_vol, r.flete_coord_rtp, r.ingreso_operativo_total, 
                         r. gasto_operativo, r.utilidad, r.rentabilidad 
-                        FROM remesas AS r JOIN destinos  AS d ON d.destino = r.destino 
+                        FROM remesas AS r LEFT JOIN destinos  AS d ON d.destino = r.destino 
                         WHERE id_remesa = '{id_remesa}';       
                         '''
             result = connection.execute(query)
@@ -1233,6 +1231,7 @@ def show_remesas(frame, tab_to_show, width, height):
         
             if not data:
                 messagebox.showerror("", f"No se encontró la remesa: {id_remesa}")
+                clean_table_guias()
                 return
             btn_delete_remesa = ttk.Button(frame_search_single_remesa, text="Eliminar", style='Danger',command= lambda: delete_remesa(entryid_remesa.get()) )
             btn_delete_remesa.grid(row=1, column=5, sticky="w", padx=5, )            
